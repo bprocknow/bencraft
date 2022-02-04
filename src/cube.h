@@ -6,13 +6,7 @@ typedef enum {
 } cubeType;
 
 typedef struct {
-    float x;
-    float y;
-    float z;
-} pointPosition;
-
-typedef struct {
-    pointPosition position[8];
+    float pos[8][3];
 
     cubeType type; 
 } cube;

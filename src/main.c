@@ -1,14 +1,55 @@
-#include "initgl.h"
+#include "display.h"
 #include <stdio.h>
 #include <stdlib.h>
-// TODO Remove?
-#include "cube.h"
 
+static GLboolean userInterrupt(windowContext *winParam)
+{
+    XEvent xev;
+    KeySym key;
+    GLboolean userinterrupt = GL_FALSE;
+    char text;
 
+    // Pump all messages from X server. Keypresses are directed to keyfunc (if defined)
+    while (XPending (winParam->xDisplay))
+    {
+        XNextEvent(winParam->xDisplay, &xev);
+/*
+	// TODO Implement key press
+        if ( xev.type == KeyPress )
+        {
+            if (XLookupString(&xev.xkey,&text,1,&key,0)==1)
+            {
+                if (esContext->keyFunc != NULL)
+                    esContext->keyFunc(esContext, text, 0, 0);
+            }
+        }
+        if (xev.type == ClientMessage) {
+            if (xev.xclient.data.l[0] == s_wmDeleteMessage) {
+                userinterrupt = GL_TRUE;
+            }
+        }
+*/
+	if (xev.type == DestroyNotify) {
+            userinterrupt = GL_TRUE;
+	}
+    }
+    return userinterrupt;
+}
 
-int main(int argc, char **args) {    
+static void WinLoop(windowContext *winParam) {
+    cube genCube;
+
+    generateCube(0, 0, 0, &genCube);
+
+    while(userInterrupt(winParam) == GL_FALSE) {
+        displayCube(winParam, &genCube);    
+        
+	eglSwapBuffers(winParam->eglDisplay, winParam->eglSurface);
+    }
+}
+
+int main() {    
     // TODO Make method that gets uniform/attribute locations for a program
-    GLint rotationLocation;
 
     const char *title = "BenCraft";
 
@@ -18,20 +59,7 @@ int main(int argc, char **args) {
     printf("EGL Initialized\n");
     initGL(&winParam);
 
-    rotationLocation = glGetUniformLocation(winParam->program, "rotation");
+    WinLoop(&winParam);
 
-/*    cube *genCube = malloc(sizeof(cube));
-    if (genCube == NULL) {
-        fprintf(stderr, "Could not alloc cube\n");
-    }
-*/
-    cube genCube;
-    generateCube(0, 7, 100, &genCube);
-    displayCube(winParam, &genCube);
-/*    // Main loop
-    while (1) {
-        
-    }
-*/
     return 1;
 }

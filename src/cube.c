@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#define CUBESIZE 0.1f
+#define CUBEWIDTH 0.5f;
 
 /**
     Params:
@@ -12,21 +12,19 @@
     @y: Position y of the cube on map
 */
 void generateCube(uint16_t x, uint16_t y, uint16_t z, cube *genCube) {
+    int curPos = 0;
     
-    genCube->position[0] = (pointPosition) {.x = ((float)x) - CUBESIZE, .y = ((float)y) - CUBESIZE, .z = ((float)z) - CUBESIZE};  
-    
-    genCube->position[1] = (pointPosition) {.x = ((float)x) + CUBESIZE, .y = ((float)y) - CUBESIZE, .z = ((float)z) - CUBESIZE};  
-    
-    genCube->position[2] = (pointPosition) {.x = ((float)x) - CUBESIZE, .y = ((float)y) - CUBESIZE, .z = ((float)z) + CUBESIZE};  
-    
-    genCube->position[3] = (pointPosition) {.x = ((float)x) + CUBESIZE, .y = ((float)y) - CUBESIZE, .z = ((float)z) + CUBESIZE};  
-    
-    genCube->position[4] = (pointPosition) {.x = ((float)x) - CUBESIZE, .y = ((float)y) + CUBESIZE, .z = ((float)z) - CUBESIZE};  
-    
-    genCube->position[5] = (pointPosition) {.x = ((float)x) + CUBESIZE, .y = ((float)y) + CUBESIZE, .z = ((float)z) - CUBESIZE};  
-    
-    genCube->position[6] = (pointPosition) {.x = ((float)x) - CUBESIZE, .y = ((float)y) + CUBESIZE, .z = ((float)z) + CUBESIZE};  
-    
-    genCube->position[7] = (pointPosition) {.x = ((float)x) + CUBESIZE, .y = ((float)y) + CUBESIZE, .z = ((float)z) + CUBESIZE};  
-    
+    // Loop through y, z, x [-1, 1] for sign to calculate position of 8 corners
+    for (int signY = -1; signY < 2; signY += 2) {
+        for (int signZ = -1; signZ < 2; signZ +=2 ) {
+            for (int signX = -1; signX < 2; signX += 2) {
+		
+		genCube->pos[curPos][0] = x + signX*CUBEWIDTH;
+	        genCube->pos[curPos][1] = y + signY*CUBEWIDTH;
+		genCube->pos[curPos][2] = z + signZ*CUBEWIDTH;
+
+		curPos += 1;
+	    }
+	}
+    }
 }

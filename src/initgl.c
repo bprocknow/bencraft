@@ -150,6 +150,9 @@ GLboolean initGL(windowContext *winParam) {
 	return GL_FALSE;
     }
 
+    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+    glViewport(0, 0, winParam->width, winParam->height);
+
     glUseProgram(winParam->programObject);
 
     return GL_FALSE;
@@ -291,34 +294,4 @@ static EGLBoolean createWindow(windowContext *winParam, const char *title) {
    winParam->eglNativeDisplay = (EGLNativeDisplayType) winParam->xDisplay;
 
    return EGL_TRUE;
-}
-
-GLboolean userInterrupt(windowContext *winParam) {
-    XEvent xEv;
-    KeySym key;
-    GLboolean userInterrupt = GL_FALSE;
-    char text;
-
-    while (XPending(winParam->xDisplay)) {
-        XNextEvent(winParam->xDisplay, &xEv);
-
-	if (xEv.type == KeyPress) {
-            if (XLookupString(&xEv.xkey, &text, 1, &key, 0) == 1) {
-		if (winParam->keyFunc != NULL) {
-	            winParam->keyFunc(winParam, text);
-	        }
-	    }
-	}
-
-	if (xEv.type == ClientMessage) {
-            if (xEv.xclient.data.l[0] == s_wmDeleteMessage) {
-                userInterrupt = GL_TRUE;
-	    }
-	}
-
-	if (xEv.type == DestroyNotify) {
-            userInterrupt = GL_TRUE;
-	}
-    }
-    return userInterrupt;
 }

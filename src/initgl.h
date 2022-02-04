@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#include <GLES2/gl2.h>
 #include <GL/gl.h>
 #include <GL/glext.h>
 
@@ -31,5 +32,3 @@ struct tagWindowContext {
 GLboolean initGL(windowContext *winParams);
 GLboolean initEGL(windowContext *winParams, const char *title, GLint width, GLint height,
 		GLuint flags);
-GLboolean userInterrupt(windowContext *winParams);
-
