@@ -99,12 +99,7 @@ static GLuint loadShader(GLenum type, const char *shaderTxt) {
     return shader;
 }
 
-/** 
-    initGL
-
-    Initializes OpenGL by loading the shaders, GL program
-*/
-GLboolean initGL(windowContext *winParam) {
+static GLboolean createProgram(windowContext *winParam) {
     GLuint vertexShader;
     GLuint fragmentShader;
     GLint status;
@@ -150,12 +145,33 @@ GLboolean initGL(windowContext *winParam) {
 	return GL_FALSE;
     }
 
+    return GL_TRUE;
+}
+
+/** 
+    initGL
+
+    Initializes OpenGL by loading the shaders, GL program
+*/
+GLboolean initGL(windowContext *winParam) {
+    
+    GLboolean ret;
+
+    ret = createProgram(winParam);
+    if (!ret) {
+        fprintf(stderr, "Could not create OpenGL program\n"); 
+	return GL_FALSE;
+    }
+    
     glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
     glViewport(0, 0, winParam->width, winParam->height);
 
     glUseProgram(winParam->programObject);
+    
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
 
-    return GL_FALSE;
+    return GL_TRUE;
 }
 
 void registerKeyFunc(windowContext *winParam, void (*keyFunc) (windowContext *, char)) {

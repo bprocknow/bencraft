@@ -10,7 +10,6 @@ find_path(X11_INCLUDE_DIR NAMES "X11/Xlib.h" "X11/Xatom.h" "X11/Xutil.h")
 find_path(EGL_INCLUDE_DIR NAMES "EGL/egl.h")
 find_path(OPENGL_INCLUDE_PATH NAMES "GL/gl.h" "GL/glext.h")
 find_path(GLES_INCLUDE_PATH NAMES "GLES/gl2.h")
-#find_path(OPENGL_INCLUDE_PATH NAMES "GL/glew.h")
 
 add_executable(bencraft ${sources})
 
@@ -23,7 +22,4 @@ find_package(EGL REQUIRED)
 find_package(X11 REQUIRED)
 find_package(GLESv2 REQUIRED)
 
-add_library(dynGL SHARED IMPORTED)
-set_target_properties(dynGL PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libGL.so)
-
-target_link_libraries(bencraft dynGL ${GLESv2_LIBRARY} ${OPENGL_LIBRARY} ${EGL_LIBRARY} ${DRM_LIBRARY} ${X11_LIBRARIES})
+target_link_libraries(bencraft -lm ${GLESv2_LIBRARY} ${OPENGL_LIBRARY} ${EGL_LIBRARY} ${X11_LIBRARIES})

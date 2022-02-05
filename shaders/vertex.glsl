@@ -1,15 +1,13 @@
 #version 110
 
-uniform float rotation;
-attribute vec3 vPosition;
+uniform mat4 matrix;
+attribute vec4 vPosition;
+attribute vec4 color;
+varying vec4 f_color;
 
 void main()
 {
-    vec4 pos;
-    float rad = radians(rotation);
-    pos.x = vPosition.x*cos(rotation) + vPosition.y*sin(rotation);
-    pos.y = -vPosition.x*sin(rotation) + vPosition.y*cos(rotation);
-    pos.z = 0.0;
-    pos.w = 1.0;
-    gl_Position = pos;
+    f_color = color; 
+
+    gl_Position = matrix * vPosition; 
 }

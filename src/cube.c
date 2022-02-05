@@ -15,8 +15,8 @@ void generateCube(uint16_t x, uint16_t y, uint16_t z, cube *genCube) {
     int curPos = 0;
     
     // Loop through y, z, x [-1, 1] for sign to calculate position of 8 corners
-    for (int signY = -1; signY < 2; signY += 2) {
-        for (int signZ = -1; signZ < 2; signZ +=2 ) {
+    for (int signZ = -1; signZ < 2; signZ += 2) {
+        for (int signY = -1; signY < 2; signY +=2 ) {
             for (int signX = -1; signX < 2; signX += 2) {
 		
 		genCube->pos[curPos][0] = x + signX*CUBEWIDTH;

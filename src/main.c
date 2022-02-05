@@ -42,7 +42,9 @@ static void WinLoop(windowContext *winParam) {
     generateCube(0, 0, 0, &genCube);
 
     while(userInterrupt(winParam) == GL_FALSE) {
-        displayCube(winParam, &genCube);    
+        glClear(GL_COLOR_BUFFER_BIT);
+
+	displayCube(winParam, &genCube);    
         
 	eglSwapBuffers(winParam->eglDisplay, winParam->eglSurface);
     }
