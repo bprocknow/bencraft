@@ -1,13 +1,13 @@
-#version 110
+#version 300 es
 
 uniform mat4 matrix;
 attribute vec4 vPosition;
-attribute vec4 color;
-varying vec4 f_color;
+attribute vec2 a_textCoord;
+
+out vec2 f_textCoord;
 
 void main()
 {
-    f_color = color; 
-
+    f_textCoord = a_textCoord;
     gl_Position = matrix * vPosition; 
 }

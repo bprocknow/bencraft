@@ -1,4 +1,8 @@
+#include "cube.h"
+#include "initgl.h"
 #include "display.h"
+#include "world.h"
+#include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -36,16 +40,39 @@ static GLboolean userInterrupt(windowContext *winParam)
     return userinterrupt;
 }
 
+static void handleErrors() {
+    GLenum errorType;
+
+    errorType = glGetError();
+    switch (errorType) {
+        case GL_NO_ERROR || GL_INVALID_ENUM:
+	    break;
+	case GL_INVALID_VALUE:
+	    LOG("OpenGL numeric value out of range.");
+	    break;
+        case GL_INVALID_OPERATION:
+	    LOG("OpenGL invalid operation occuring");
+	    break;
+	case GL_OUT_OF_MEMORY:
+	    LOG("OpenGL insufficient memory to execute commands");
+	    break;
+    }
+}
+
 static void WinLoop(windowContext *winParam) {
     cube genCube;
 
-    generateCube(0, 0, 0, &genCube);
+    generateCube(0, 0, 0, &genCube, GROUND);
 
     while(userInterrupt(winParam) == GL_FALSE) {
         glClear(GL_COLOR_BUFFER_BIT);
-
-	displayCube(winParam, &genCube);    
         
+	setWorldOrient(winParam);
+
+	displayCube(winParam, &genCube); 
+    
+        handleErrors();
+
 	eglSwapBuffers(winParam->eglDisplay, winParam->eglSurface);
     }
 }
@@ -57,10 +84,16 @@ int main() {
 
     windowContext winParam;
 
-    initEGL(&winParam, title, 800, 600, WINDOW_RGB);
+    if (!initEGL(&winParam, title, 800, 600, WINDOW_RGB)) {
+        fprintf(stderr, "Could not initialize EGL\n");
+	return 0;
+    }
     printf("EGL Initialized\n");
-    initGL(&winParam);
-
+    if (!initGL(&winParam)) {
+        fprintf(stderr, "ERROR initializing OpenGL failed\n");
+	return 0;
+    }
+    loadTextureFaces(); 
     WinLoop(&winParam);
 
     return 1;

@@ -29,6 +29,7 @@ struct tagWindowContext {
     void (*keyFunc) (windowContext *winParam, char text);
 };
 
+GLuint loadTexture(const char *imagePath);
 GLboolean initGL(windowContext *winParams);
 GLboolean initEGL(windowContext *winParams, const char *title, GLint width, GLint height,
 		GLuint flags);

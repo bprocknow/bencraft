@@ -35,52 +35,53 @@ void LOG(char *format, ...) {
 
     for(traverse = format; *traverse != '\0'; traverse++) 
     {
-        while( *traverse != '%' ) 
+        if ( *traverse != '%') 
         { 
-            putchar(*traverse);
+	    putchar(*traverse);
+        } else {
+
             traverse++; 
-        } 
-
-        traverse++; 
-
-        switch(*traverse) 
-        { 
-            case 'c' : i = va_arg(arg,int);     //Fetch char argument
-                        putchar(i);
-                        break; 
-
-            case 'd' : i = va_arg(arg,int);         //Fetch Decimal/Integer argument
-                        if(i<0) 
-                        { 
-                            i = -i;
-                            putchar('-'); 
-                        } 
-                        puts(convert(i,10));
-                        break; 
-            case 'u': i = va_arg(arg, int);	    // Fetch Unsigned int argument
-	                fputs(convert(i, 10), stdout);
-			break;
-            case 'f': f = va_arg(arg, double);
-	                char ptr[sizeof(float) * 8];
-			convertFloat(ptr, f);
-	                fputs(ptr, stdout);
-			break;
-            case 'o': i = va_arg(arg,unsigned int); //Fetch Octal representation
-                        fputs(convert(i,8), stdout);
-                        break; 
-
-            case 's': s = va_arg(arg,char *);       //Fetch string
-                        fputs(s, stdout); 
-                        break; 
-
-            case 'x': i = va_arg(arg,unsigned int); //Fetch Hexadecimal representation
-                        fputs(convert(i,16), stdout);
-                        break; 
-        }   
+   
+            switch(*traverse) 
+            { 
+                case 'c' : i = va_arg(arg,int);     //Fetch char argument
+                            putchar(i);
+                            break; 
+   
+                case 'd' : i = va_arg(arg,int);         //Fetch Decimal/Integer argument
+                            if(i<0) 
+                            { 
+                                i = -i;
+                                putchar('-'); 
+                            } 
+                            puts(convert(i,10));
+                            break; 
+                case 'u': i = va_arg(arg, int);	    // Fetch Unsigned int argument
+   	                 fputs(convert(i, 10), stdout);
+   	         	break;
+                case 'f': f = va_arg(arg, double);
+   	                 char ptr[sizeof(float) * 8];
+   	         	convertFloat(ptr, f);
+   	                 fputs(ptr, stdout);
+   	         	break;
+                case 'o': i = va_arg(arg,unsigned int); //Fetch Octal representation
+                            fputs(convert(i,8), stdout);
+                            break; 
+   
+                case 's': s = va_arg(arg,char *);       //Fetch string
+                            fputs(s, stdout); 
+                            break; 
+   
+                case 'x': i = va_arg(arg,unsigned int); //Fetch Hexadecimal representation
+                            fputs(convert(i,16), stdout);
+                            break; 
+            }
+        }
     } 
-
+  
     va_end(arg);
     putchar('\n');
+    fflush(stdout);
     return; 
 #else 
     return;

@@ -21,5 +21,6 @@ find_package(OpenGL REQUIRED)
 find_package(EGL REQUIRED)
 find_package(X11 REQUIRED)
 find_package(GLESv2 REQUIRED)
+find_package(PNG REQUIRED)
 
-target_link_libraries(bencraft -lm ${GLESv2_LIBRARY} ${OPENGL_LIBRARY} ${EGL_LIBRARY} ${X11_LIBRARIES})
+target_link_libraries(bencraft -lm ${GLESv2_LIBRARY} ${OPENGL_LIBRARY} ${EGL_LIBRARY} ${X11_LIBRARIES} ${PNG_LIBRARY})
