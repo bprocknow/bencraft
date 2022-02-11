@@ -149,14 +149,17 @@ static char *readFile(const char *filePath) {
         printf("Could not open file: %s, %s\n", filePath, strerror(errno));
 	return NULL;
     }
+    // Find size of file
     fseek(fp, 0L, SEEK_END);
     fileSize = ftell(fp);
 
+    // Return file pointer to beginning of file
     fseek(fp, 0L, SEEK_SET);
 
     retBuf = malloc(fileSize * sizeof(char) + 1);
     retBuf[fileSize *sizeof(char)] = '\0';
 
+    // Copy the glsl file to the alloc'd buffer
     while (fgets(buf, bufSize, fp)) {
 	memcpy(retBuf+curIdx, buf, ftell(fp)-curIdx);
 	curIdx = ftell(fp);
@@ -209,6 +212,8 @@ static GLuint loadShader(GLenum type, const char *shaderTxt) {
 	return 0;
     }
 
+    // TODO Will only work with two shaders.  Change when multiple programs are
+    // TODO used.
     if (type == GL_FRAGMENT_SHADER) {
         glReleaseShaderCompiler();
     }
@@ -235,18 +240,16 @@ static GLboolean createProgram(windowContext *winParam) {
     }
     vertexShader = loadShader(GL_VERTEX_SHADER, shaderTxt);
     if (!vertexShader) {
+        fprintf(stderr, "Could not load fragment shader\n");
         return GL_FALSE;
     }
     fragmentShader = loadShader(GL_FRAGMENT_SHADER, fragTxt);
     if (!fragmentShader) {
+        fprintf(stderr, "Could not load fragment shader\n");
         return GL_FALSE;
     }
     free(shaderTxt);
     free(fragTxt);
-    if (!vertexShader || !fragmentShader) {
-        fprintf(stderr, "Could not load GL shaders\n");
-	return GL_FALSE;
-    }
 
     winParam->programObject = glCreateProgram();
     if (winParam->programObject == 0) {
@@ -297,7 +300,8 @@ GLboolean initGL(windowContext *winParam) {
     glViewport(0, 0, winParam->width, winParam->height);
 
     glUseProgram(winParam->programObject);
-    
+   
+    // Remove shapes that are facing away (clockwise)
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
@@ -314,7 +318,7 @@ void registerKeyFunc(windowContext *winParam, void (*keyFunc) (windowContext *, 
 
     Initialized egl context, surface and display
 */
-GLboolean initEGL(windowContext *winParam, const char *title, GLint width, GLint height,
+int initEGL(windowContext *winParam, const char *title, GLint width, GLint height,
 	GLuint flags) {
     EGLConfig config;
     EGLint major, minor;
@@ -325,16 +329,16 @@ GLboolean initEGL(windowContext *winParam, const char *title, GLint width, GLint
     
     if (!createWindow(winParam, title)) {
 	fprintf(stderr, "Failed to create X window\n");
-        return GL_FALSE;
+        return 0;
     }
 
     winParam->eglDisplay = eglGetDisplay(winParam->eglNativeDisplay);
     if (winParam->eglDisplay == EGL_NO_DISPLAY) {
-        return GL_FALSE;
+        return 0;
     }
 
     if (!eglInitialize(winParam->eglDisplay, &major, &minor)) {
-        return GL_FALSE;
+        return 0;
     }
     printf("EGL version %d.%d\n", major, minor);
 
@@ -353,31 +357,31 @@ GLboolean initEGL(windowContext *winParam, const char *title, GLint width, GLint
 	};
 
 	if (!eglChooseConfig(winParam->eglDisplay, attribList, &config, 1, &numConfigs)) {
-            return GL_FALSE;
+            return 0;
 	}
 	if (numConfigs < 1) {
-            return GL_FALSE;
+            return 0;
 	}
     }
 
     winParam->eglSurface = eglCreateWindowSurface(winParam->eglDisplay, config, 
     						winParam->eglNativeWindow, NULL);
     if (winParam->eglSurface == EGL_NO_SURFACE) {
-        return GL_FALSE;
+        return 0;
     }
 
     winParam->eglContext = eglCreateContext(winParam->eglDisplay, config, EGL_NO_CONTEXT,
     					contextAttribs);
     if (winParam->eglContext == EGL_NO_CONTEXT) {
-        return GL_FALSE;
+        return 0;
     }
 
     if (!eglMakeCurrent(winParam->eglDisplay, winParam->eglSurface, 
     			winParam->eglSurface, winParam->eglContext)) {
-        return GL_FALSE;
+        return 0;
     }
 
-    return GL_TRUE;
+    return 1;
 }
 
 /**
