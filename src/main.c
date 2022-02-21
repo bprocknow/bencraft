@@ -3,6 +3,7 @@
 #include "display.h"
 #include "world.h"
 #include "log.h"
+#include "octree.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -60,17 +61,12 @@ static void handleErrors() {
 }
 
 static void WinLoop(windowContext *winParam) {
-    cube genCube;
-
-    generateCube(0, 0, 0, &genCube, GROUND);
 
     while(userInterrupt(winParam) == GL_FALSE) {
         glClear(GL_COLOR_BUFFER_BIT);
         
 	setWorldOrient(winParam);
 
-	displayCube(winParam, &genCube); 
-    
         handleErrors();
 
 	eglSwapBuffers(winParam->eglDisplay, winParam->eglSurface);
@@ -94,6 +90,9 @@ int main() {
 	return 0;
     }
     loadTextureFaces(); 
+    
+    OCT_LoadMap("/home/bprocknow/repo/bencraft/maps/map4x4.txt");
+
     WinLoop(&winParam);
 
     return 1;

@@ -9,7 +9,7 @@
 
 // TODO make attribute structure containing attribute positions for different shaders
 
-void displayCube(windowContext *winParam, cube *c) {
+void displayCube(windowContext *winParam, Cube_T *c) {
 
     static const uint32_t FACEARR[6][4] = {
         {0, 1, 2, 3},
@@ -28,7 +28,7 @@ void displayCube(windowContext *winParam, cube *c) {
         0.0f, 1.0f,
         1.0f, 1.0f
     };
-
+    
     // TODO put in/create struct for ground program drawing
     GLint vertexPos;
     GLint textureCoordPos;

@@ -3,11 +3,10 @@
 #include "log.h"
 
 #include <GL/gl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
 #include <stdio.h>
-
-#define CUBEWIDTH 0.5f;
 
 GLuint gFaceTextures[NUMTYPES][6] = { 0 };
 
@@ -49,11 +48,18 @@ void loadTextureFaces(void) {
 /**
     Params:
     @x: Position x of the cube on map
-    @y: Position y of the cube on map
+    @y: Position y of the cube on map (up)
+    @z: Position z of the cube on map
 */
-void generateCube(uint16_t x, uint16_t y, uint16_t z, cube *genCube, cubeType type) {
+Cube_T *generateCube(uint16_t x, uint16_t y, uint16_t z, CubeType type) {
+
     int curPos = 0;
     
+    Cube_T *genCube = malloc(sizeof(Cube_T));
+    if (genCube == NULL) {
+        fprintf(stderr, "ERROR: Out of memory to allocate cube\n");
+        return NULL;
+    }
     // Loop through y, z, x [-1, 1] for sign to calculate position of 8 corners
     for (int signZ = -1; signZ < 2; signZ += 2) {
         for (int signY = -1; signY < 2; signY +=2 ) {
@@ -63,10 +69,16 @@ void generateCube(uint16_t x, uint16_t y, uint16_t z, cube *genCube, cubeType ty
 	        genCube->pos[curPos][1] = y + signY*CUBEWIDTH;
 		genCube->pos[curPos][2] = z + signZ*CUBEWIDTH;
 
+	 	// Move position to next corner (x,y,z)
 		curPos += 1;
 	    }
 	}
     }
-    
+    genCube->x = x;
+    genCube->y = y;
+    genCube->z = z;
+
     genCube->type = type;
+    
+    return genCube;
 }
