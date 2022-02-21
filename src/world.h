@@ -1,0 +1,2 @@
+
+void setWorldOrient(windowContext *winParam);
