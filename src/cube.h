@@ -11,12 +11,13 @@ typedef enum {
 } CubeType;
 
 typedef struct {
-    float pos[8][3];	// Cube corner position
     int x;		// Cube center position
     int y;		
     int z;
 
-    CubeType type;    
+    CubeType type;
+
+    uint8_t faceVis[6];	// Face visible boolean
 } Cube_T;
 
 extern GLuint gFaceTextures[NUMTYPES][6];

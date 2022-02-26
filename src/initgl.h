@@ -17,6 +17,7 @@ struct tagWindowContext {
     uint32_t width, height;
     
     Display *xDisplay;
+    Window win;
 
     EGLNativeDisplayType eglNativeDisplay;
     EGLNativeWindowType eglNativeWindow;

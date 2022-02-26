@@ -53,27 +53,12 @@ void loadTextureFaces(void) {
 */
 Cube_T *generateCube(uint16_t x, uint16_t y, uint16_t z, CubeType type) {
 
-    int curPos = 0;
-    
     Cube_T *genCube = malloc(sizeof(Cube_T));
     if (genCube == NULL) {
         fprintf(stderr, "ERROR: Out of memory to allocate cube\n");
         return NULL;
     }
-    // Loop through y, z, x [-1, 1] for sign to calculate position of 8 corners
-    for (int signZ = -1; signZ < 2; signZ += 2) {
-        for (int signY = -1; signY < 2; signY +=2 ) {
-            for (int signX = -1; signX < 2; signX += 2) {
-		
-		genCube->pos[curPos][0] = x + signX*CUBEWIDTH;
-	        genCube->pos[curPos][1] = y + signY*CUBEWIDTH;
-		genCube->pos[curPos][2] = z + signZ*CUBEWIDTH;
-
-	 	// Move position to next corner (x,y,z)
-		curPos += 1;
-	    }
-	}
-    }
+    
     genCube->x = x;
     genCube->y = y;
     genCube->z = z;

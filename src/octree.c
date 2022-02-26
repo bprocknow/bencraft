@@ -1,5 +1,8 @@
 
+#include "initgl.h"
 #include "cube.h"
+#include "display.h"
+#include "log.h"
 #include "octree.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +20,34 @@ static void calculateCenter(Node *child, Node *parent, int childQuadrant);
 static int allocateNode(Node *parent, int quadrant);
 static int recAddBlock(Cube_T *cube, Node *curNode);
 
+static void depthFirstSearch(windowContext *winParam, Node *node) {
+    // Base Case 0:  node is a leaf
+    if (node->cube != NULL) {
+        printf("Displaying cube: (%d, %d, %d)\n", node->cube->x, node->cube->y, node->cube->z);
+	displayCube(winParam, node->cube);
+	return;
+    }
+
+    for (int i = 0; i < 8; i++) {
+        
+	// Base Case 1: Child is NULL
+	if (node->children[i] == NULL) {
+            continue;
+	}
+
+	// Recusive case
+	depthFirstSearch(winParam, node->children[i]);
+    }
+}
+
+void OCT_DrawMap(windowContext *winParam) {
+    // Depth first search 
+    if (root == NULL) {
+        LOG("Root is null.  Cannot draw map");
+    }
+    depthFirstSearch(winParam, root);
+}
+
 int OCT_LoadMap(const char *filePath) {
     
     FILE *fp;
@@ -30,7 +61,6 @@ int OCT_LoadMap(const char *filePath) {
     int x, y, z = 0;
     do {
         char c = fgetc(fp);
-        printf("Char: %c\n", c);	
 	if (feof(fp)) {
             break;
 	}
@@ -51,9 +81,11 @@ int OCT_LoadMap(const char *filePath) {
             printf("Wrong %c: %d, %d, %d\n", c, x, y, z);
 	    return 0;
 	}
-
-	Cube_T *cube = generateCube(x, y, z, GROUND); 
-        addBlock(cube);
+	// TODO Make map's numbers contain which type of block should be created
+        if (c == '1') {
+	    Cube_T *cube = generateCube(x, y, z, GROUND); 
+            addBlock(cube);
+	}
 
 	z += 1;
     } while (1);
@@ -64,7 +96,6 @@ int OCT_LoadMap(const char *filePath) {
 }
 
 static int initializeTree(Cube_T *cube) {
-    printf("Initializing tree\n");
 
     root = calloc(1, sizeof(Node));
     if (root == NULL) {
@@ -200,7 +231,6 @@ static int recAddBlock(Cube_T *cube, Node *curNode) {
 
     // Case 0: curNode is leaf node - split node if possible
     if (curNode->cube != NULL) {
-        printf("Case 0\tLayer: %d\n", curNode->layer);
         // Move the cube in the current node to the children of current node
 	quadrant = findQuadrant(curNode->cube, curNode);
 
@@ -230,23 +260,19 @@ static int recAddBlock(Cube_T *cube, Node *curNode) {
     
     // Case 1: curNode child is empty - allocate new node, add cube as leaf
     if (curNode->children[quadrant] == NULL) {
-        printf("Case 1\tQuadrant %d\n", quadrant);
         if (!allocateNode(curNode, quadrant)) {
             return 0;
 	}
-        printf("Inserting leaf in layer %d: (%d, %d, %d)\n", curNode->layer, cube->x, cube->y, cube->z);	
 	curNode->children[quadrant]->cube = cube;
 	return 1;
     }
 
     // Case 2: curNode child is not empty 
-    printf("Case 2\tLayer: %d\tQuadrant: %d\n", curNode->layer, quadrant),
     recAddBlock(cube, curNode->children[quadrant]);
     return 1;
 }
 
 static int addBlock(Cube_T *cube) {
-    printf("Inserting cube: %d, %d, %d\n", cube->x, cube->y, cube->z);
 
     // Case 0: Root is null - Initialize Tree
     if (root == NULL) {

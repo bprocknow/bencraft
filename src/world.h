@@ -1,2 +1,2 @@
 
-void setWorldOrient(windowContext *winParam);
+void setWorldOrient(windowContext *winParam, float mouseX, float mouseY);

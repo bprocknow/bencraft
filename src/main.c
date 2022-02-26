@@ -3,43 +3,10 @@
 #include "display.h"
 #include "world.h"
 #include "log.h"
+#include "window.h"
 #include "octree.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-static GLboolean userInterrupt(windowContext *winParam)
-{
-    XEvent xev;
-    KeySym key;
-    GLboolean userinterrupt = GL_FALSE;
-    char text;
-
-    // Pump all messages from X server. Keypresses are directed to keyfunc (if defined)
-    while (XPending (winParam->xDisplay))
-    {
-        XNextEvent(winParam->xDisplay, &xev);
-/*
-	// TODO Implement key press
-        if ( xev.type == KeyPress )
-        {
-            if (XLookupString(&xev.xkey,&text,1,&key,0)==1)
-            {
-                if (esContext->keyFunc != NULL)
-                    esContext->keyFunc(esContext, text, 0, 0);
-            }
-        }
-        if (xev.type == ClientMessage) {
-            if (xev.xclient.data.l[0] == s_wmDeleteMessage) {
-                userinterrupt = GL_TRUE;
-            }
-        }
-*/
-	if (xev.type == DestroyNotify) {
-            userinterrupt = GL_TRUE;
-	}
-    }
-    return userinterrupt;
-}
 
 static void handleErrors() {
     GLenum errorType;
@@ -61,15 +28,24 @@ static void handleErrors() {
 }
 
 static void WinLoop(windowContext *winParam) {
+    int windowX, windowY;
 
     while(userInterrupt(winParam) == GL_FALSE) {
-        glClear(GL_COLOR_BUFFER_BIT);
         
-	setWorldOrient(winParam);
+	updateWindowSize(winParam);
+	getMouseInput(winParam, &windowX, &windowY);
+	float x = (float)windowX * 360.0f / (float)winParam->width;
+	float y = (float)windowY * 360.0f / (float)winParam->height;
+	printf("X: %f\tY: %f\n", x, y);
+	setWorldOrient(winParam, x, y);
+        
+	OCT_DrawMap(winParam);
 
         handleErrors();
 
 	eglSwapBuffers(winParam->eglDisplay, winParam->eglSurface);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 }
 
@@ -80,7 +56,7 @@ int main() {
 
     windowContext winParam;
 
-    if (!initEGL(&winParam, title, 800, 600, WINDOW_RGB)) {
+    if (!initEGL(&winParam, title, 800, 600, WINDOW_RGB | WINDOW_DEPTH)) {
         fprintf(stderr, "Could not initialize EGL\n");
 	return 0;
     }

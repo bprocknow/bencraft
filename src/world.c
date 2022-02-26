@@ -22,33 +22,33 @@ static void setOrient(float rotX, float rotY, float rotZ, float posX, float posY
     radZ = DEGTORAD(rotZ);
 
     arr[0] = cosf(radZ)*cosf(radY);
-    arr[1] = sinf(radX)*sinf(radY)*cosf(radZ) - cosf(radX)*sinf(radZ);
-    arr[2] = cosf(radX)*sinf(radY)*cosf(radZ) + sinf(radX)*sinf(radZ);
-    arr[3] = posX;
     arr[4] = cosf(radY)*sinf(radZ);
-    arr[5] = sinf(radX)*sinf(radY)*sinf(radZ) + cosf(radX)*cosf(radZ);
-    arr[6] = cosf(radX)*sinf(radY)*sinf(radZ) - sinf(radX)*cosf(radZ);
-    arr[7] = posY;
     arr[8] = -sinf(radY);
-    arr[9] = sinf(radX)*cosf(radY);
-    arr[10] = cosf(radX)*cosf(radY);
-    arr[11] = posZ;
     arr[12] = 0.0f;
+    arr[1] = sinf(radX)*sinf(radY)*cosf(radZ) - cosf(radX)*sinf(radZ);
+    arr[5] = sinf(radX)*sinf(radY)*sinf(radZ) + cosf(radX)*cosf(radZ);
+    arr[9] = sinf(radX)*cosf(radY);
     arr[13] = 0.0f;
+    arr[2] = cosf(radX)*sinf(radY)*cosf(radZ) + sinf(radX)*sinf(radZ);
+    arr[6] = cosf(radX)*sinf(radY)*sinf(radZ) - sinf(radX)*cosf(radZ);
+    arr[10] = cosf(radX)*cosf(radY);
     arr[14] = 0.0f;
+    arr[3] = posX;
+    arr[7] = posY;
+    arr[11] = posZ;
     arr[15] = 1.0f;
 }
 
 // TODO Input rotation/position vector
-void setWorldOrient(windowContext *winParam) {
+void setWorldOrient(windowContext *winParam, float mouseX, float mouseY) {
     GLint matPos;
 
     float arr[16];
-    struct timeval te;
-    gettimeofday(&te, NULL);
-    long long millisec = (te.tv_sec*1000LL + te.tv_usec/1000)/10;
-    setOrient(millisec%360, millisec%360, millisec%360, 0, 0, 0, arr);
-    //setOrient(0, 0, 0, 0, 0, 0, arr);
+    
+//    setOrient(millisec%360, millisec%360, millisec%360, 0, 0, 0, arr);
+    // Movement mouse X is a Z rotation
+    // Movement mouse Y is a X rotation
+    setOrient(mouseY, 0, -mouseX, 0, 0, 0, arr);
     matPos = glGetUniformLocation(winParam->programObject, "matrix");
     glUniformMatrix4fv(matPos, 1, GL_FALSE, arr); 
 

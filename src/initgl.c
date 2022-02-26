@@ -1,23 +1,19 @@
 #include "initgl.h"
+#include "window.h"
 #include "log.h"
 
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xatom.h>
-#include <X11/Xutil.h>
 #include <math.h>
 #include <png.h>
 #include <errno.h>
 
-static Atom s_wmDeleteMessage;
 static const char *VERTEX_FILE = "/home/bprocknow/repo/bencraft/shaders/vertex.glsl";
 static const char *FRAG_FILE = "/home/bprocknow/repo/bencraft/shaders/fragment.glsl";
 
 static int readPNG(const char *imagePath, int *outWidth, int *outHeight, Bool *outHasAlpha, GLubyte **outData);
-static EGLBoolean createWindow(windowContext *winParam, const char *title);
 static char *readFile(const char *filePath);
 
 /*
@@ -306,6 +302,9 @@ GLboolean initGL(windowContext *winParam) {
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
 
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
     return GL_TRUE;
 }
 
@@ -384,65 +383,3 @@ int initEGL(windowContext *winParam, const char *title, GLint width, GLint heigh
     return 1;
 }
 
-/**
-    createWindow
-
-    Used to initialized native X11 display
-*/
-static EGLBoolean createWindow(windowContext *winParam, const char *title) {
-    Window root;
-    XSetWindowAttributes swa;
-    XSetWindowAttributes xAttr;
-    Atom wm_state;
-    XWMHints hints;
-    XEvent xEv;
-    Window win;
-
-    winParam->xDisplay = XOpenDisplay(NULL);
-    if (!winParam->xDisplay) {
-        return EGL_FALSE;
-    }
-
-    root = DefaultRootWindow(winParam->xDisplay);
-
-    swa.event_mask = ExposureMask | PointerMotionMask | KeyPressMask;
-    printf("Creating Widnw \n");
-    win = XCreateWindow(
-    		winParam->xDisplay, root,
-		0, 0, winParam->width, winParam->height, 0,
-		CopyFromParent, InputOutput,
-		CopyFromParent, CWEventMask,
-		&swa);
-    s_wmDeleteMessage = XInternAtom(winParam->xDisplay, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols(winParam->xDisplay, win, &s_wmDeleteMessage, 1);
-
-    xAttr.override_redirect = False;
-    XChangeWindowAttributes(winParam->xDisplay, win, CWOverrideRedirect, &xAttr);
-
-    hints.input = True;
-    hints.flags = InputHint;
-    XSetWMHints(winParam->xDisplay, win, &hints);
-
-    XMapWindow(winParam->xDisplay, win);
-    XStoreName(winParam->xDisplay, win, title);
-
-    wm_state = XInternAtom(winParam->xDisplay, "_NET_WM_STATE", False);
-
-    memset(&xEv, 0, sizeof(xEv));
-    xEv.type 			= ClientMessage;
-    xEv.xclient.window 		= win;
-    xEv.xclient.message_type 	= wm_state;
-    xEv.xclient.format	 	= 32;
-    xEv.xclient.data.l[0]  	= 1;
-    xEv.xclient.data.l[1]	= False;
-    XSendEvent(winParam->xDisplay,
-		DefaultRootWindow(winParam->xDisplay),
-		False,
-		SubstructureNotifyMask,
-		&xEv);
-   
-   winParam->eglNativeWindow = (EGLNativeWindowType) win;
-   winParam->eglNativeDisplay = (EGLNativeDisplayType) winParam->xDisplay;
-
-   return EGL_TRUE;
-}
