@@ -1,4 +1,6 @@
 
+// TODO Dynamically determine mapsize from file 
+#define MAPSIZE 4
 
 // Data of each octree member
 struct Node {

@@ -1,7 +1,6 @@
 #include "initgl.h"
 #include "cube.h"
 #include "log.h"
-
 #include <GL/gl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,20 +14,20 @@ static const char *baseDir = "/home/bprocknow/repo/bencraft/textures/";
 /*
     For each type of block, load the textures for each face
 */
-void loadTextureFaces(void) {
+void CUBE_LoadTextureFaces(void) {
     char dir[128] = "";
     for (int i = 0; i < NUMTYPES; i++) {
         switch (i) {
             case GROUND:
 	    	strcat(strcat(dir, baseDir), "grassside.png");
 		LOG(dir);
-	        GLuint grassSide = loadTexture(dir);
+	        GLuint grassSide = INITGL_LoadTexture(dir);
 		dir[0] = '\0';
 		strcat(strcat(dir, baseDir), "grasstop.png");
-		GLuint grassTop = loadTexture(dir);
+		GLuint grassTop = INITGL_LoadTexture(dir);
 		dir[0] = '\0';
 		strcat(strcat(dir, baseDir), "ground.png");
-		GLuint ground = loadTexture(dir);
+		GLuint ground = INITGL_LoadTexture(dir);
 
 		gFaceTextures[GROUND][0] = grassSide; 
 	        gFaceTextures[GROUND][1] = grassSide;
@@ -51,7 +50,7 @@ void loadTextureFaces(void) {
     @y: Position y of the cube on map (up)
     @z: Position z of the cube on map
 */
-Cube_T *generateCube(uint16_t x, uint16_t y, uint16_t z, CubeType type) {
+Cube_T *CUBE_GenerateCube(uint16_t x, uint16_t y, uint16_t z, CubeType type) {
 
     Cube_T *genCube = malloc(sizeof(Cube_T));
     if (genCube == NULL) {

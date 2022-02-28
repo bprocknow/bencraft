@@ -1,3 +1,4 @@
+
 #include <stdint.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -30,7 +31,7 @@ struct tagWindowContext {
     void (*keyFunc) (windowContext *winParam, char text);
 };
 
-GLuint loadTexture(const char *imagePath);
-GLboolean initGL(windowContext *winParams);
-int initEGL(windowContext *winParams, const char *title, GLint width, GLint height,
+GLuint INITGL_LoadTexture(const char *imagePath);
+GLboolean INITGL_InitGL(windowContext *winParams);
+int INITGL_InitEGL(windowContext *winParams, const char *title, GLint width, GLint height,
 		GLuint flags);

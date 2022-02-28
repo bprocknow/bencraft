@@ -1,3 +1,4 @@
+
 #include <GL/gl.h>
 #include <stdint.h>
 
@@ -22,5 +23,5 @@ typedef struct {
 
 extern GLuint gFaceTextures[NUMTYPES][6];
 
-void loadTextureFaces(void);
-Cube_T *generateCube(uint16_t x, uint16_t y, uint16_t z, CubeType cType);
+void CUBE_LoadTextureFaces(void);
+Cube_T *CUBE_GenerateCube(uint16_t x, uint16_t y, uint16_t z, CubeType cType);

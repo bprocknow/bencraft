@@ -1,4 +1,5 @@
 
+
 #include "initgl.h"
 #include "cube.h"
 #include "display.h"
@@ -10,9 +11,6 @@
 
 Node *root = NULL;
 
-// TODO Dynamically find mapsize based on file - handle incorrect file size
-static const int MAPSIZE = 4;
-
 static int addBlock(Cube_T *cube);
 static int initializeTree(Cube_T *cube);
 static int findQuadrant(Cube_T *cube, Node *curNode);
@@ -23,7 +21,6 @@ static int recAddBlock(Cube_T *cube, Node *curNode);
 static void depthFirstSearch(windowContext *winParam, Node *node) {
     // Base Case 0:  node is a leaf
     if (node->cube != NULL) {
-        printf("Displaying cube: (%d, %d, %d)\n", node->cube->x, node->cube->y, node->cube->z);
 	displayCube(winParam, node->cube);
 	return;
     }
@@ -83,7 +80,7 @@ int OCT_LoadMap(const char *filePath) {
 	}
 	// TODO Make map's numbers contain which type of block should be created
         if (c == '1') {
-	    Cube_T *cube = generateCube(x, y, z, GROUND); 
+	    Cube_T *cube = CUBE_GenerateCube(x, y, z, GROUND); 
             addBlock(cube);
 	}
 

@@ -1,7 +1,8 @@
+
 #include "initgl.h"
+#include "world.h"
 #include "window.h"
 #include "log.h"
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -101,7 +102,7 @@ static int readPNG(const char *imagePath, int *outWidth, int *outHeight, Bool *o
 /** 
     Read glsl file for loading shaders
 */
-GLuint loadTexture(const char *imagePath) {
+GLuint INITGL_LoadTexture(const char *imagePath) {
     GLuint textureId;
     
     // TODO Read the header of the file and find what type of image it is.
@@ -282,7 +283,7 @@ static GLboolean createProgram(windowContext *winParam) {
 
     Initializes OpenGL by loading the shaders, GL program
 */
-GLboolean initGL(windowContext *winParam) {
+GLboolean INITGL_InitGL(windowContext *winParam) {
     
     GLboolean ret;
 
@@ -296,11 +297,11 @@ GLboolean initGL(windowContext *winParam) {
     glViewport(0, 0, winParam->width, winParam->height);
 
     glUseProgram(winParam->programObject);
-   
+    
     // Remove shapes that are facing away (clockwise)
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
-    glCullFace(GL_BACK);
+    glCullFace(GL_FRONT);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -317,7 +318,7 @@ void registerKeyFunc(windowContext *winParam, void (*keyFunc) (windowContext *, 
 
     Initialized egl context, surface and display
 */
-int initEGL(windowContext *winParam, const char *title, GLint width, GLint height,
+int INITGL_InitEGL(windowContext *winParam, const char *title, GLint width, GLint height,
 	GLuint flags) {
     EGLConfig config;
     EGLint major, minor;
@@ -326,7 +327,7 @@ int initEGL(windowContext *winParam, const char *title, GLint width, GLint heigh
     winParam->width = width;
     winParam->height = height;
     
-    if (!createWindow(winParam, title)) {
+    if (!WIN_CreateWindow(winParam, title)) {
 	fprintf(stderr, "Failed to create X window\n");
         return 0;
     }

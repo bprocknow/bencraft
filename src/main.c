@@ -1,3 +1,4 @@
+
 #include "cube.h"
 #include "initgl.h"
 #include "display.h"
@@ -28,23 +29,26 @@ static void handleErrors() {
 }
 
 static void WinLoop(windowContext *winParam) {
-    int windowX, windowY;
+    UserPosition_T userPos;
+    userPos.posX = 0.0f;
+    userPos.posY = 0.0f;
+    userPos.posZ = 0.0f;
 
-    while(userInterrupt(winParam) == GL_FALSE) {
-        
-	updateWindowSize(winParam);
-	getMouseInput(winParam, &windowX, &windowY);
-	float x = (float)windowX * 360.0f / (float)winParam->width;
-	float y = (float)windowY * 360.0f / (float)winParam->height;
-	printf("X: %f\tY: %f\n", x, y);
-	setWorldOrient(winParam, x, y);
+    while(WIN_UserInterrupt(winParam, &userPos) == GL_FALSE) {
+        // Update the width/height stored in windowContext when user incr/decr screen size
+	WIN_UpdateWindowSize(winParam);
+        glViewport(0, 0, winParam->width, winParam->height);
+
+	WIN_GetMouseInput(winParam, &userPos);
+	
+	WORLD_SetWorldOrient(winParam, &userPos);
         
 	OCT_DrawMap(winParam);
 
+        // Handle OpenGL Errors
         handleErrors();
 
 	eglSwapBuffers(winParam->eglDisplay, winParam->eglSurface);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 }
@@ -56,16 +60,16 @@ int main() {
 
     windowContext winParam;
 
-    if (!initEGL(&winParam, title, 800, 600, WINDOW_RGB | WINDOW_DEPTH)) {
+    if (!INITGL_InitEGL(&winParam, title, 800, 600, WINDOW_RGB | WINDOW_DEPTH)) {
         fprintf(stderr, "Could not initialize EGL\n");
 	return 0;
     }
     printf("EGL Initialized\n");
-    if (!initGL(&winParam)) {
+    if (!INITGL_InitGL(&winParam)) {
         fprintf(stderr, "ERROR initializing OpenGL failed\n");
 	return 0;
     }
-    loadTextureFaces(); 
+    CUBE_LoadTextureFaces(); 
     
     OCT_LoadMap("/home/bprocknow/repo/bencraft/maps/map4x4.txt");
 
