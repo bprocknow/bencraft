@@ -1,6 +1,6 @@
 
-
 #include "initgl.h"
+#include "world.h"
 #include "cube.h"
 #include "display.h"
 #include "log.h"
@@ -11,12 +11,49 @@
 
 Node *root = NULL;
 
-static int addBlock(Cube_T *cube);
+static void depthFirstSearch(windowContext *winParam, Node *node);
 static int initializeTree(Cube_T *cube);
-static int findQuadrant(Cube_T *cube, Node *curNode);
+static int findQuadrant(int x, int y, int z, Node *curNode);
 static void calculateCenter(Node *child, Node *parent, int childQuadrant);
 static int allocateNode(Node *parent, int quadrant);
 static int recAddBlock(Cube_T *cube, Node *curNode);
+
+static int findCube(int x, int y, int z) {
+    // Case 0: Root is null -> no cubes
+    if (root == NULL) {
+        return 0;
+    }
+    
+    // Case 1: Root is leaf 
+    if (root->cube) {
+        if (root->cube->x == x && root->cube->y == y && root->cube->z == z) {
+            return 1;
+	}
+    }
+
+    // Case 2: Root has children -> search down the tree
+    Node *curNode = root;
+    while (1) {
+	int quadrant = findQuadrant(x, y, z, curNode);
+        
+	if (curNode->children[quadrant] == NULL) {
+            return 0;
+	}
+
+        curNode = curNode->children[quadrant];
+
+        if (curNode->cube) {
+            // Found leaf
+	    if (curNode->cube->x == x && curNode->cube->y == y && curNode->cube->z == z) {
+                return 1;
+	    } else {
+                return 0;
+	    }
+	}
+    }
+
+    return 0;
+}
 
 static void depthFirstSearch(windowContext *winParam, Node *node) {
     // Base Case 0:  node is a leaf
@@ -81,7 +118,7 @@ int OCT_LoadMap(const char *filePath) {
 	// TODO Make map's numbers contain which type of block should be created
         if (c == '1') {
 	    Cube_T *cube = CUBE_GenerateCube(x, y, z, GROUND); 
-            addBlock(cube);
+            OCT_AddBlock(cube);
 	}
 
 	z += 1;
@@ -100,45 +137,46 @@ static int initializeTree(Cube_T *cube) {
         return 0;
     }
     root->layer = 0;
-    root->width = MAPSIZE / 2;
-    root->center[0] = MAPSIZE / 2;
-    root->center[1] = MAPSIZE / 2;
-    root->center[2] = MAPSIZE / 2;
+    root->width = gMapSize / 2;
+    root->center[0] = gMapSize / 2;
+    root->center[1] = gMapSize / 2;
+    root->center[2] = gMapSize / 2;
     root->cube = cube;
     memset(root->children, 0, sizeof(root->children));
     
     return 1;
 }
 
-static int findQuadrant(Cube_T *cube, Node *curNode) {
+// Find the quadrant [0, 7] that x,y,z belong to with origin curNode
+static int findQuadrant(int x, int y, int z, Node *curNode) {
     
-    if (cube->x < curNode->center[0] && cube-> y < curNode->center[1] && cube->z < curNode->center[2]) {
+    if (x < curNode->center[0] && y < curNode->center[1] && z < curNode->center[2]) {
         return 0;
     }
-    if (cube->x < curNode->center[0] && cube-> y < curNode->center[1] && cube->z >= curNode->center[2]) {
+    if (x < curNode->center[0] && y < curNode->center[1] && z >= curNode->center[2]) {
         return 1;
     }
-    if (cube->x < curNode->center[0] && cube-> y >= curNode->center[1] && cube->z < curNode->center[2]) {
+    if (x < curNode->center[0] && y >= curNode->center[1] && z < curNode->center[2]) {
         return 2;
     }
-    if (cube->x < curNode->center[0] && cube-> y >= curNode->center[1] && cube->z >= curNode->center[2]) {
+    if (x < curNode->center[0] && y >= curNode->center[1] && z >= curNode->center[2]) {
         return 3;
     }
-    if (cube->x >= curNode->center[0] && cube-> y < curNode->center[1] && cube->z < curNode->center[2]) {
+    if (x >= curNode->center[0] && y < curNode->center[1] && z < curNode->center[2]) {
         return 4;
     }
-    if (cube->x >= curNode->center[0] && cube-> y < curNode->center[1] && cube->z >= curNode->center[2]) {
+    if (x >= curNode->center[0] && y < curNode->center[1] && z >= curNode->center[2]) {
         return 5;
     }
-    if (cube->x >= curNode->center[0] && cube-> y >= curNode->center[1] && cube->z < curNode->center[2]) {
+    if (x >= curNode->center[0] && y >= curNode->center[1] && z < curNode->center[2]) {
         return 6;
     }
-    if (cube->x >= curNode->center[0] && cube->y >=curNode->center[1] && cube->z >= curNode->center[2]) {
+    if (x >= curNode->center[0] && y >=curNode->center[1] && z >= curNode->center[2]) {
         return 7;
     }
 
     fprintf(stderr, "ERROR: Could not find a quadrant for cube coords (%d, %d, %d)\n", 
-     cube->x, cube->y, cube->z);
+      x, y, z);
     return -1;
 }
 
@@ -229,7 +267,7 @@ static int recAddBlock(Cube_T *cube, Node *curNode) {
     // Case 0: curNode is leaf node - split node if possible
     if (curNode->cube != NULL) {
         // Move the cube in the current node to the children of current node
-	quadrant = findQuadrant(curNode->cube, curNode);
+	quadrant = findQuadrant(curNode->cube->x, curNode->cube->y, curNode->cube->z, curNode);
 
 	if (quadrant < 0) {
             fprintf(stderr, "ERROR: Failed to add block\n");
@@ -253,7 +291,7 @@ static int recAddBlock(Cube_T *cube, Node *curNode) {
 	return 1;
     }
 
-    quadrant = findQuadrant(cube, curNode);
+    quadrant = findQuadrant(cube->x, cube->y, cube->z, curNode);
     
     // Case 1: curNode child is empty - allocate new node, add cube as leaf
     if (curNode->children[quadrant] == NULL) {
@@ -269,7 +307,7 @@ static int recAddBlock(Cube_T *cube, Node *curNode) {
     return 1;
 }
 
-static int addBlock(Cube_T *cube) {
+int OCT_AddBlock(Cube_T *cube) {
 
     // Case 0: Root is null - Initialize Tree
     if (root == NULL) {
@@ -279,6 +317,12 @@ static int addBlock(Cube_T *cube) {
 	 }
 	 return 1;
     }
+
+    if (findCube(cube->x, cube->y, cube->z)) {
+        fprintf(stderr, "ERROR: Cube already added to tree\n");
+	return 0;
+    }
+
     return recAddBlock(cube, root);    
 }
 

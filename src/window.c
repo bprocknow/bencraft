@@ -11,6 +11,8 @@
 #define RIGHTCLICKMASK 1024
 #define LEFTCLICKMASK 256
 
+#define MOVEMENTSPEED 1.0
+
 static Atom s_wmDeleteMessage;
 
 void WIN_UpdateWindowSize(windowContext *winParam) {
@@ -39,22 +41,22 @@ void WIN_GetMouseInput(windowContext *winParam, UserPosition_T *usrPos) {
 static void handleText(UserPosition_T *userPos, char text) {
     switch (text) {
         case 'w':
-            userPos->posZ -= 0.1f;
+            userPos->posZ -= MOVEMENTSPEED;
 	    break;
 	case 'a':
-	    userPos->posX -= 0.1f;
+	    userPos->posX -= MOVEMENTSPEED;
 	    break;
 	case 's':
-	    userPos->posZ += 0.1f;
+	    userPos->posZ += MOVEMENTSPEED;
 	    break;
 	case 'd':
-            userPos->posX += 0.1f;
+            userPos->posX += MOVEMENTSPEED;
 	    break;
         case 'z':
-	    userPos->posY += 0.1f;
+	    userPos->posY += MOVEMENTSPEED;
 	    break;
 	case 'x': 
-	    userPos->posY -= 0.1f;
+	    userPos->posY -= MOVEMENTSPEED;
 	    break;
 	default:
 	    break;
@@ -74,9 +76,7 @@ int WIN_UserInterrupt(windowContext *winParam, UserPosition_T *userPos) {
 
 	// TODO Implement key press
         if ( xev.type == KeyPress ) {
-	    printf("Detected keypress\n");
             if (XLookupString(&xev.xkey, &text, 1, &key, 0) == 1) {
-                printf("Keypress: %c\n", text);
                 handleText(userPos, text);
 	    }
         }

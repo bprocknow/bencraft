@@ -15,5 +15,6 @@ struct Node {
 };
 typedef struct Node Node;
 
+int OCT_AddBlock(Cube_T *cube);
 void OCT_DrawMap(windowContext *winParam);
 int OCT_LoadMap(const char *filePath);

@@ -71,8 +71,8 @@ int main() {
     }
     CUBE_LoadTextureFaces(); 
     
-    OCT_LoadMap("/home/bprocknow/repo/bencraft/maps/map4x4.txt");
-
+    WORLD_GenerateWorld(256, 1);
+    
     WinLoop(&winParam);
 
     return 1;
