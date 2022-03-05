@@ -9,7 +9,7 @@
 
 // TODO make attribute structure containing attribute positions for different shaders
 
-void displayCube(windowContext *winParam, cube *c) {
+void displayCube(windowContext *winParam, Cube_T *c) {
 
     static const uint32_t FACEARR[6][4] = {
         {0, 1, 2, 3},
@@ -28,11 +28,30 @@ void displayCube(windowContext *winParam, cube *c) {
         0.0f, 1.0f,
         1.0f, 1.0f
     };
-
+    
     // TODO put in/create struct for ground program drawing
     GLint vertexPos;
     GLint textureCoordPos;
     GLint samplerLoc;
+
+    float arr[8][3];
+    int curPos = 0;
+
+    // Loop through y, z, x [-1, 1] for sign to calculate position of 8 corners
+    for (int signZ = -1; signZ < 2; signZ += 2) {
+        for (int signY = -1; signY < 2; signY +=2 ) {
+            for (int signX = -1; signX < 2; signX += 2) {
+		
+		arr[curPos][0] = c->x + signX*CUBEWIDTH;
+	        arr[curPos][1] = c->y + signY*CUBEWIDTH;
+		arr[curPos][2] = c->z + signZ*CUBEWIDTH;
+
+	 	// Move position to next corner (x,y,z)
+		curPos += 1;
+	    }
+	}
+    }
+
 
     vertexPos = glGetAttribLocation(winParam->programObject, "vPosition");
     textureCoordPos = glGetAttribLocation(winParam->programObject, "a_textCoord");
@@ -47,10 +66,10 @@ void displayCube(windowContext *winParam, cube *c) {
     for (int i = 0; i < 6; i++) {
         // Create matrix of each corner (x,y,z) that makes up half the face of one side of cube
 	GLfloat verts[] = {
-    	    c->pos[FACEARR[i][0]][0], c->pos[FACEARR[i][0]][1], c->pos[FACEARR[i][0]][2], 1.0f,
-            c->pos[FACEARR[i][1]][0], c->pos[FACEARR[i][1]][1], c->pos[FACEARR[i][1]][2], 1.0f,
-	    c->pos[FACEARR[i][2]][0], c->pos[FACEARR[i][2]][1], c->pos[FACEARR[i][2]][2], 1.0f,
-	    c->pos[FACEARR[i][3]][0], c->pos[FACEARR[i][3]][1], c->pos[FACEARR[i][3]][2], 1.0f
+    	    arr[FACEARR[i][0]][0], arr[FACEARR[i][0]][1], arr[FACEARR[i][0]][2], 1.0f,
+            arr[FACEARR[i][1]][0], arr[FACEARR[i][1]][1], arr[FACEARR[i][1]][2], 1.0f,
+	    arr[FACEARR[i][2]][0], arr[FACEARR[i][2]][1], arr[FACEARR[i][2]][2], 1.0f,
+	    arr[FACEARR[i][3]][0], arr[FACEARR[i][3]][1], arr[FACEARR[i][3]][2], 1.0f
 	};
 	
         glVertexAttribPointer(textureCoordPos, 2, GL_FLOAT, GL_FALSE, 0, textInd);        

@@ -1,23 +1,20 @@
-#include "initgl.h"
-#include "log.h"
 
+#include "initgl.h"
+#include "world.h"
+#include "window.h"
+#include "log.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xatom.h>
-#include <X11/Xutil.h>
 #include <math.h>
 #include <png.h>
 #include <errno.h>
 
-static Atom s_wmDeleteMessage;
 static const char *VERTEX_FILE = "/home/bprocknow/repo/bencraft/shaders/vertex.glsl";
 static const char *FRAG_FILE = "/home/bprocknow/repo/bencraft/shaders/fragment.glsl";
 
 static int readPNG(const char *imagePath, int *outWidth, int *outHeight, Bool *outHasAlpha, GLubyte **outData);
-static EGLBoolean createWindow(windowContext *winParam, const char *title);
 static char *readFile(const char *filePath);
 
 /*
@@ -105,7 +102,7 @@ static int readPNG(const char *imagePath, int *outWidth, int *outHeight, Bool *o
 /** 
     Read glsl file for loading shaders
 */
-GLuint loadTexture(const char *imagePath) {
+GLuint INITGL_LoadTexture(const char *imagePath) {
     GLuint textureId;
     
     // TODO Read the header of the file and find what type of image it is.
@@ -120,17 +117,20 @@ GLuint loadTexture(const char *imagePath) {
 	return 0;
     }
 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_2D, textureId);
 
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    
     glTexImage2D(GL_TEXTURE_2D, 0, hasAlpha ? GL_RGBA : GL_RGB, 
     	texWidth, texHeight, 0, hasAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, textureImg); 
-   
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    
+  
+    glGenerateMipmap(GL_TEXTURE_2D);
+
     LOG("Loaded texture: %s\tvalue: %d", imagePath, textureId);
 
     return textureId;
@@ -286,7 +286,7 @@ static GLboolean createProgram(windowContext *winParam) {
 
     Initializes OpenGL by loading the shaders, GL program
 */
-GLboolean initGL(windowContext *winParam) {
+GLboolean INITGL_InitGL(windowContext *winParam) {
     
     GLboolean ret;
 
@@ -300,11 +300,14 @@ GLboolean initGL(windowContext *winParam) {
     glViewport(0, 0, winParam->width, winParam->height);
 
     glUseProgram(winParam->programObject);
-   
+    
     // Remove shapes that are facing away (clockwise)
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
-    glCullFace(GL_BACK);
+    glCullFace(GL_FRONT);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
     return GL_TRUE;
 }
@@ -318,7 +321,7 @@ void registerKeyFunc(windowContext *winParam, void (*keyFunc) (windowContext *, 
 
     Initialized egl context, surface and display
 */
-int initEGL(windowContext *winParam, const char *title, GLint width, GLint height,
+int INITGL_InitEGL(windowContext *winParam, const char *title, GLint width, GLint height,
 	GLuint flags) {
     EGLConfig config;
     EGLint major, minor;
@@ -327,7 +330,7 @@ int initEGL(windowContext *winParam, const char *title, GLint width, GLint heigh
     winParam->width = width;
     winParam->height = height;
     
-    if (!createWindow(winParam, title)) {
+    if (!WIN_CreateWindow(winParam, title)) {
 	fprintf(stderr, "Failed to create X window\n");
         return 0;
     }
@@ -384,65 +387,3 @@ int initEGL(windowContext *winParam, const char *title, GLint width, GLint heigh
     return 1;
 }
 
-/**
-    createWindow
-
-    Used to initialized native X11 display
-*/
-static EGLBoolean createWindow(windowContext *winParam, const char *title) {
-    Window root;
-    XSetWindowAttributes swa;
-    XSetWindowAttributes xAttr;
-    Atom wm_state;
-    XWMHints hints;
-    XEvent xEv;
-    Window win;
-
-    winParam->xDisplay = XOpenDisplay(NULL);
-    if (!winParam->xDisplay) {
-        return EGL_FALSE;
-    }
-
-    root = DefaultRootWindow(winParam->xDisplay);
-
-    swa.event_mask = ExposureMask | PointerMotionMask | KeyPressMask;
-    printf("Creating Widnw \n");
-    win = XCreateWindow(
-    		winParam->xDisplay, root,
-		0, 0, winParam->width, winParam->height, 0,
-		CopyFromParent, InputOutput,
-		CopyFromParent, CWEventMask,
-		&swa);
-    s_wmDeleteMessage = XInternAtom(winParam->xDisplay, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols(winParam->xDisplay, win, &s_wmDeleteMessage, 1);
-
-    xAttr.override_redirect = False;
-    XChangeWindowAttributes(winParam->xDisplay, win, CWOverrideRedirect, &xAttr);
-
-    hints.input = True;
-    hints.flags = InputHint;
-    XSetWMHints(winParam->xDisplay, win, &hints);
-
-    XMapWindow(winParam->xDisplay, win);
-    XStoreName(winParam->xDisplay, win, title);
-
-    wm_state = XInternAtom(winParam->xDisplay, "_NET_WM_STATE", False);
-
-    memset(&xEv, 0, sizeof(xEv));
-    xEv.type 			= ClientMessage;
-    xEv.xclient.window 		= win;
-    xEv.xclient.message_type 	= wm_state;
-    xEv.xclient.format	 	= 32;
-    xEv.xclient.data.l[0]  	= 1;
-    xEv.xclient.data.l[1]	= False;
-    XSendEvent(winParam->xDisplay,
-		DefaultRootWindow(winParam->xDisplay),
-		False,
-		SubstructureNotifyMask,
-		&xEv);
-   
-   winParam->eglNativeWindow = (EGLNativeWindowType) win;
-   winParam->eglNativeDisplay = (EGLNativeDisplayType) winParam->xDisplay;
-
-   return EGL_TRUE;
-}

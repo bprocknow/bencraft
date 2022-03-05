@@ -1,2 +1,2 @@
 
-void displayCube(windowContext *winParam, cube *c);
+void displayCube(windowContext *winParam, Cube_T *c);

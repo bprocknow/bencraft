@@ -1,44 +1,13 @@
+
 #include "cube.h"
 #include "initgl.h"
 #include "display.h"
 #include "world.h"
 #include "log.h"
+#include "window.h"
+#include "octree.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-static GLboolean userInterrupt(windowContext *winParam)
-{
-    XEvent xev;
-    KeySym key;
-    GLboolean userinterrupt = GL_FALSE;
-    char text;
-
-    // Pump all messages from X server. Keypresses are directed to keyfunc (if defined)
-    while (XPending (winParam->xDisplay))
-    {
-        XNextEvent(winParam->xDisplay, &xev);
-/*
-	// TODO Implement key press
-        if ( xev.type == KeyPress )
-        {
-            if (XLookupString(&xev.xkey,&text,1,&key,0)==1)
-            {
-                if (esContext->keyFunc != NULL)
-                    esContext->keyFunc(esContext, text, 0, 0);
-            }
-        }
-        if (xev.type == ClientMessage) {
-            if (xev.xclient.data.l[0] == s_wmDeleteMessage) {
-                userinterrupt = GL_TRUE;
-            }
-        }
-*/
-	if (xev.type == DestroyNotify) {
-            userinterrupt = GL_TRUE;
-	}
-    }
-    return userinterrupt;
-}
 
 static void handleErrors() {
     GLenum errorType;
@@ -60,20 +29,27 @@ static void handleErrors() {
 }
 
 static void WinLoop(windowContext *winParam) {
-    cube genCube;
+    UserPosition_T userPos;
+    userPos.posX = 0.0f;
+    userPos.posY = 0.0f;
+    userPos.posZ = 0.0f;
 
-    generateCube(0, 0, 0, &genCube, GROUND);
+    while(WIN_UserInterrupt(winParam, &userPos) == GL_FALSE) {
+        // Update the width/height stored in windowContext when user incr/decr screen size
+	WIN_UpdateWindowSize(winParam);
+        glViewport(0, 0, winParam->width, winParam->height);
 
-    while(userInterrupt(winParam) == GL_FALSE) {
-        glClear(GL_COLOR_BUFFER_BIT);
+	WIN_GetMouseInput(winParam, &userPos);
+	
+	WORLD_SetWorldOrient(winParam, &userPos);
         
-	setWorldOrient(winParam);
+	OCT_DrawMap(winParam);
 
-	displayCube(winParam, &genCube); 
-    
+        // Handle OpenGL Errors
         handleErrors();
 
 	eglSwapBuffers(winParam->eglDisplay, winParam->eglSurface);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 }
 
@@ -84,16 +60,19 @@ int main() {
 
     windowContext winParam;
 
-    if (!initEGL(&winParam, title, 800, 600, WINDOW_RGB)) {
+    if (!INITGL_InitEGL(&winParam, title, 800, 600, WINDOW_RGB | WINDOW_DEPTH)) {
         fprintf(stderr, "Could not initialize EGL\n");
 	return 0;
     }
     printf("EGL Initialized\n");
-    if (!initGL(&winParam)) {
+    if (!INITGL_InitGL(&winParam)) {
         fprintf(stderr, "ERROR initializing OpenGL failed\n");
 	return 0;
     }
-    loadTextureFaces(); 
+    CUBE_LoadTextureFaces(); 
+    
+    WORLD_GenerateWorld(256, 1);
+    
     WinLoop(&winParam);
 
     return 1;

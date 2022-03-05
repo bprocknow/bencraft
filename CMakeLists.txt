@@ -13,7 +13,7 @@ find_path(GLES_INCLUDE_PATH NAMES "GLES/gl2.h")
 
 add_executable(bencraft ${sources})
 
-target_compile_options(bencraft PUBLIC -Wall -Wextra -DDEBUG)
+target_compile_options(bencraft PUBLIC -Wall -Wextra -DDEBUG -g)
 
 set_property(TARGET bencraft PROPERTY C_STANDARD 99)
 
