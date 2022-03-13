@@ -17,9 +17,13 @@
 // TODO Make aspect and FOV ratios user adjustable to min/max range of values
 #define FOV 90.0 * PI / 180.0
 #define NEAR 0.125
-#define FAR 100.0
+#define FAR 30.0
 
-int gMapSize = 0;
+int gMapSize = 4;
+
+static int worldAlg(int r, int mX, int mZ);
+static int worldFindMinimum(int r, int size);
+
 
 // Find the minimum point in the world.  
 // There probably in O(1) way to implement this with calc magic.  
@@ -29,9 +33,7 @@ static int worldFindMinimum(int r, int size) {
     
     for (int x = 0; x < size; x++) {
         for (int z = 0; z < size; z++) {
-	    //int y = (r*sinf(x/(4*r)) + r*cosf(x/r) - 2*r*sinf(x/r) - 2*r*sinf(z/(4*r)) - r*cosf(z/r) + r*sinf(z/(2*r)));
-	    int y = (int)mapEq(r, x, z);
-
+	    int y = worldAlg(r, x, z);
 	    if (y < minimum) {
 		minimum = y;
 	    }
@@ -54,7 +56,6 @@ static int worldAlg(int r, int mX, int mZ) {
     float x = (float)mX;
     float z = (float)mZ;
     
-    //return (int)(r*sinf(x/(4*r)) + r*cosf(x/r) - 2*r*sinf(x/r) - 2*r*sinf(z/(4*r)) - r*cosf(z/r) + r*sinf(z/(2*r)));
     return (int)mapEq(r, x, z);
 }
 
@@ -87,10 +88,12 @@ void WORLD_GenerateWorld(int size, int seedValue) {
             if (maxY > size - 1) {
                 maxY = size - 1;
 	    }
-//	    for (int y = 0; y <= maxY; y++) {
-	    genCube = CUBE_GenerateCube(x, maxY, z, GROUND);
-	    OCT_AddBlock(genCube);
-//	    }
+            for (int y = 0; y <= maxY; y++) {
+	        genCube = CUBE_GenerateCube(x*2*CUBEWIDTH, y*2*CUBEWIDTH, z*2*CUBEWIDTH, GRASS);
+	        if (genCube && !OCT_AddBlock(genCube)) {
+                    LOG("Could not add block: %d, %d, %d", genCube->x, genCube->y, genCube->z);
+	        }
+	    }
 	}
     }
 }

@@ -117,8 +117,8 @@ GLuint INITGL_LoadTexture(const char *imagePath) {
 	return 0;
     }
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -304,7 +304,7 @@ GLboolean INITGL_InitGL(windowContext *winParam) {
     // Remove shapes that are facing away (clockwise)
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
-    glCullFace(GL_FRONT);
+    glCullFace(GL_BACK);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);

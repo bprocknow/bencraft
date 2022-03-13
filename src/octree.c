@@ -6,6 +6,7 @@
 #include "log.h"
 #include "octree.h"
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,17 +19,17 @@ static void calculateCenter(Node *child, Node *parent, int childQuadrant);
 static int allocateNode(Node *parent, int quadrant);
 static int recAddBlock(Cube_T *cube, Node *curNode);
 
-static int findCube(int x, int y, int z) {
+static Cube_T *findCube(int x, int y, int z) {
     // Case 0: Root is null -> no cubes
     if (root == NULL) {
-        return 0;
+        return NULL;
     }
     
     // Case 1: Root is leaf 
     if (root->cube) {
         if (root->cube->x == x && root->cube->y == y && root->cube->z == z) {
-            return 1;
-	}
+            return root->cube;
+        }
     }
 
     // Case 2: Root has children -> search down the tree
@@ -37,7 +38,7 @@ static int findCube(int x, int y, int z) {
 	int quadrant = findQuadrant(x, y, z, curNode);
         
 	if (curNode->children[quadrant] == NULL) {
-            return 0;
+            return NULL;
 	}
 
         curNode = curNode->children[quadrant];
@@ -45,41 +46,14 @@ static int findCube(int x, int y, int z) {
         if (curNode->cube) {
             // Found leaf
 	    if (curNode->cube->x == x && curNode->cube->y == y && curNode->cube->z == z) {
-                return 1;
+                return curNode->cube;
 	    } else {
-                return 0;
+                return NULL;
 	    }
 	}
     }
 
     return 0;
-}
-
-static void depthFirstSearch(windowContext *winParam, Node *node) {
-    // Base Case 0:  node is a leaf
-    if (node->cube != NULL) {
-	displayCube(winParam, node->cube);
-	return;
-    }
-
-    for (int i = 0; i < 8; i++) {
-        
-	// Base Case 1: Child is NULL
-	if (node->children[i] == NULL) {
-            continue;
-	}
-
-	// Recusive case
-	depthFirstSearch(winParam, node->children[i]);
-    }
-}
-
-void OCT_DrawMap(windowContext *winParam) {
-    // Depth first search 
-    if (root == NULL) {
-        LOG("Root is null.  Cannot draw map");
-    }
-    depthFirstSearch(winParam, root);
 }
 
 int OCT_LoadMap(const char *filePath) {
@@ -117,7 +91,12 @@ int OCT_LoadMap(const char *filePath) {
 	}
 	// TODO Make map's numbers contain which type of block should be created
         if (c == '1') {
-	    Cube_T *cube = CUBE_GenerateCube(x, y, z, GROUND); 
+	    Cube_T *cube;
+	    if (x == 0 || y == 0 || z == 0) {
+	        cube = CUBE_GenerateCube(x, y, z, GROUND); 
+	    } else {
+	        cube = CUBE_GenerateCube(x, y, z, GRASS); 
+	    }
             OCT_AddBlock(cube);
 	}
 
@@ -127,6 +106,33 @@ int OCT_LoadMap(const char *filePath) {
     fclose(fp);
     
     return 1;
+}
+
+static void depthFirstSearch(windowContext *winParam, Node *node) {
+    // Base Case 0:  node is a leaf
+    if (node->cube != NULL) {
+	displayCube(winParam, node->cube);
+	return;
+    }
+
+    for (int i = 0; i < 8; i++) {
+        
+	// Base Case 1: Child is NULL
+	if (node->children[i] == NULL) {
+            continue;
+	}
+
+	// Recusive case
+	depthFirstSearch(winParam, node->children[i]);
+    }
+}
+
+void OCT_DrawMap(windowContext *winParam) {
+    // Depth first search 
+    if (root == NULL) {
+        LOG("Root is null.  Cannot draw map");
+    }
+    depthFirstSearch(winParam, root);
 }
 
 static int initializeTree(Cube_T *cube) {
@@ -261,6 +267,55 @@ static int allocateNode(Node *parent, int quadrant) {
     return 1;
 }
 
+// Find the neighbors of the inputted cube and set their visible faces to 0 (false)
+static void setFaces(Cube_T *cube) {
+    Cube_T *neighbor;
+
+    // Cube doesn't have neighbors if it is the edge of world
+    if (cube->z > 0) {
+        neighbor = findCube(cube->x, cube->y, cube->z - 1);
+	if (neighbor) {
+	    neighbor->face[2] = true;
+	    cube->face[0] = true;
+	}
+    }
+    if (cube->z < gMapSize - 1) {
+        neighbor = findCube(cube->x, cube->y, cube->z + 1);
+        if (neighbor) {
+            neighbor->face[0] = true;
+	    cube->face[2] = true;
+	}
+    }
+    if (cube->x  > 0) {
+        neighbor = findCube(cube->x - 1, cube->y, cube->z);
+        if (neighbor) {
+            neighbor->face[1] = true;
+	    cube->face[3] = true;
+	}
+    }
+    if (cube->x < gMapSize - 1) {
+        neighbor = findCube(cube->x + 1, cube->y, cube->z);
+        if (neighbor) {
+            neighbor->face[3] = true;
+	    cube->face[1] = true;
+	}
+    }
+    if (cube->y > 0) {
+        neighbor = findCube(cube->x, cube->y - 1, cube->z);
+        if (neighbor) {
+            neighbor->face[5] = true;
+	    cube->face[4] = true;
+	}
+    }
+    if (cube->y < gMapSize) {
+        neighbor = findCube(cube->x, cube->y + 1, cube->z);
+        if (neighbor) {
+            neighbor->face[4] = true;
+	    cube->face[5] = true;
+	}
+    }
+}
+
 static int recAddBlock(Cube_T *cube, Node *curNode) {
     int quadrant;
 
@@ -308,7 +363,8 @@ static int recAddBlock(Cube_T *cube, Node *curNode) {
 }
 
 int OCT_AddBlock(Cube_T *cube) {
-
+    int ret; 
+    
     // Case 0: Root is null - Initialize Tree
     if (root == NULL) {
          if (!initializeTree(cube)) {
@@ -323,7 +379,12 @@ int OCT_AddBlock(Cube_T *cube) {
 	return 0;
     }
 
-    return recAddBlock(cube, root);    
+    ret = recAddBlock(cube, root);    
+    
+    // If block has neighbors, turn mutual faces off from being rendered
+    setFaces(cube);
+
+    return ret;
 }
 
 void cleanUpOctree(void) { 

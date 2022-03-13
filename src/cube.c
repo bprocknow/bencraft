@@ -16,27 +16,34 @@ static const char *baseDir = "/home/bprocknow/repo/bencraft/textures/";
 */
 void CUBE_LoadTextureFaces(void) {
     char dir[128] = "";
+
+    strcat(strcat(dir, baseDir), "grassside.png");
+    GLuint grassSide = INITGL_LoadTexture(dir);
+    dir[0] = '\0';
+    strcat(strcat(dir, baseDir), "grasstop.png");
+    GLuint grassTop = INITGL_LoadTexture(dir);
+    dir[0] = '\0';
+    strcat(strcat(dir, baseDir), "ground.png");
+    GLuint ground = INITGL_LoadTexture(dir);
+
     for (int i = 0; i < NUMTYPES; i++) {
         switch (i) {
+            case GRASS:
+		gFaceTextures[GRASS][0] = grassSide; 
+	        gFaceTextures[GRASS][1] = grassSide;
+		gFaceTextures[GRASS][2] = grassSide;
+		gFaceTextures[GRASS][3] = grassSide; 
+		gFaceTextures[GRASS][4] = ground;
+		gFaceTextures[GRASS][5] = grassTop;
+                break;
             case GROUND:
-	    	strcat(strcat(dir, baseDir), "grassside.png");
-		LOG(dir);
-	        GLuint grassSide = INITGL_LoadTexture(dir);
-		dir[0] = '\0';
-		strcat(strcat(dir, baseDir), "grasstop.png");
-		GLuint grassTop = INITGL_LoadTexture(dir);
-		dir[0] = '\0';
-		strcat(strcat(dir, baseDir), "ground.png");
-		GLuint ground = INITGL_LoadTexture(dir);
-
-		gFaceTextures[GROUND][0] = grassSide; 
-	        gFaceTextures[GROUND][1] = grassSide;
-		gFaceTextures[GROUND][2] = grassSide;
-		gFaceTextures[GROUND][3] = grassSide; 
+		gFaceTextures[GROUND][0] = ground; 
+	        gFaceTextures[GROUND][1] = ground;
+		gFaceTextures[GROUND][2] = ground;
+		gFaceTextures[GROUND][3] = ground; 
 		gFaceTextures[GROUND][4] = ground;
-		gFaceTextures[GROUND][5] = grassTop;
-                
-		break;
+                gFaceTextures[GROUND][5] = ground;         
+	        break;
 	    default:
 	        LOG("Invalid type");
 		break;
@@ -63,6 +70,14 @@ Cube_T *CUBE_GenerateCube(uint16_t x, uint16_t y, uint16_t z, CubeType type) {
     genCube->z = z;
 
     genCube->type = type;
+
+    genCube->face[0] = false;
+    genCube->face[1] = false;
+    genCube->face[2] = false;
+    genCube->face[3] = false;
+    genCube->face[4] = false;
+    genCube->face[5] = false;
     
+
     return genCube;
 }
