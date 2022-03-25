@@ -12,7 +12,7 @@
 
 Node *root = NULL;
 
-static void depthFirstSearch(windowContext *winParam, Node *node);
+static void depthFirstDraw(windowContext *winParam, Node *node);
 static int initializeTree(Cube_T *cube);
 static int findQuadrant(int x, int y, int z, Node *curNode);
 static void calculateCenter(Node *child, Node *parent, int childQuadrant);
@@ -108,23 +108,47 @@ int OCT_LoadMap(const char *filePath) {
     return 1;
 }
 
-static void depthFirstSearch(windowContext *winParam, Node *node) {
-    // Base Case 0:  node is a leaf
-    if (node->cube != NULL) {
-	displayCube(winParam, node->cube);
-	return;
-    }
+/**
+    Perform depth first search on the octree, passing the neighbors (positive x (Px), negative x (Nx)...) of each cube while recursing down the tree.
+    
+    Base case 0: node is a leaf.  Draw the node if it is visible
+    Recursive case: Starting from the highest y-value cube, continue depth first search until the cubes are no longer visible
+    Base case 1: If the cubes in the current node cover the entire ground, return True.  Else false and keep searching downwards.
 
-    for (int i = 0; i < 8; i++) {
-        
-	// Base Case 1: Child is NULL
-	if (node->children[i] == NULL) {
-            continue;
+*/
+static bool depthFirstDraw(windowContext *winParam, Node *node, Node *nodePx, Node *nodeMx, Node *nodePz, Node *nodeMz, Node *nodeT) {
+    // Base case 0: Node is a leaf
+    if (node->cube) {
+        return drawLeaf(winParam, node, nodePx, nodeNx, nodePz, nodeMz, nodeT);
+    }
+    // Loop through the four columns of the octree (Indicies [0, 4], [1, 5], [2, 6], [3, 7])
+    for (int i = 0; i < 4; i++) {
+        // Find if the upper y-value node is visible
+	if (node->child[i]) {
+	    // Node above this node is not the surface
+            if (!nodeT || !nodeT->child[i+4] || !nodeT->child[i+4].surface) {
+                node->child[i].surface = passNeighbor(x, node, nodePx, nodeMx, nodePz, nodeMz, nodeT);
+	    } else {
+                node->child[i].surface = true;
+	    }
 	}
-
-	// Recusive case
-	depthFirstSearch(winParam, node->children[i]);
+	// Lower y-value node
+	if (node->child[i+4]) {
+	    if (node->child[i] == NULL || !node->child[x].surface) {
+	        // The top node to the lower y-value node is the upper y-value node in the same column
+                node->child[i].surface = passNeighbor(x+4, node, nodePx, nodeMx, nodePz, nodeMz, NULL);
+	    } else {
+                node->child[i].surface = true;
+	    }
+	}
     }
+    
+    // Base case 1: Do the cubes in this node cover the ground of the oct-block
+    if ((node->child[0] || node->child[4]) && (node->child[1] || node->child[5]) &&
+      (node->child[2] || node->child[6]) && (node->child[3] || node->child[7])) {
+        return true;
+    }
+    return false;
 }
 
 void OCT_DrawMap(windowContext *winParam) {
@@ -132,7 +156,9 @@ void OCT_DrawMap(windowContext *winParam) {
     if (root == NULL) {
         LOG("Root is null.  Cannot draw map");
     }
-    depthFirstSearch(winParam, root);
+
+    // Root doesn't have any neighbors
+    depthFirstDraw(winParam, root, NULL, NULL, NULL, NULL, NULL);
 }
 
 static int initializeTree(Cube_T *cube) {
@@ -156,28 +182,28 @@ static int initializeTree(Cube_T *cube) {
 // Find the quadrant [0, 7] that x,y,z belong to with origin curNode
 static int findQuadrant(int x, int y, int z, Node *curNode) {
     
-    if (x < curNode->center[0] && y < curNode->center[1] && z < curNode->center[2]) {
+    if (x < curNode->center[0] && y >= curNode->center[1] && z < curNode->center[2]) {
         return 0;
     }
-    if (x < curNode->center[0] && y < curNode->center[1] && z >= curNode->center[2]) {
+    if (x < curNode->center[0] && y >= curNode->center[1] && z >= curNode->center[2]) {
         return 1;
     }
-    if (x < curNode->center[0] && y >= curNode->center[1] && z < curNode->center[2]) {
+    if (x >= curNode->center[0] && y >= curNode->center[1] && z < curNode->center[2]) {
         return 2;
     }
-    if (x < curNode->center[0] && y >= curNode->center[1] && z >= curNode->center[2]) {
+    if (x >= curNode->center[0] && y >= curNode->center[1] && z >= curNode->center[2]) {
         return 3;
     }
-    if (x >= curNode->center[0] && y < curNode->center[1] && z < curNode->center[2]) {
+    if (x < curNode->center[0] && y < curNode->center[1] && z < curNode->center[2]) {
         return 4;
     }
-    if (x >= curNode->center[0] && y < curNode->center[1] && z >= curNode->center[2]) {
+    if (x < curNode->center[0] && y < curNode->center[1] && z >= curNode->center[2]) {
         return 5;
     }
-    if (x >= curNode->center[0] && y >= curNode->center[1] && z < curNode->center[2]) {
+    if (x >= curNode->center[0] && y < curNode->center[1] && z < curNode->center[2]) {
         return 6;
     }
-    if (x >= curNode->center[0] && y >=curNode->center[1] && z >= curNode->center[2]) {
+    if (x >= curNode->center[0] && y < curNode->center[1] && z >= curNode->center[2]) {
         return 7;
     }
 
@@ -191,41 +217,41 @@ static void calculateCenter(Node *child, Node *parent, int childQuadrant) {
 
     if (childQuadrant == 0) {
         child->center[0] = parent->center[0] - moveAmt;
-        child->center[1] = parent->center[1] - moveAmt;
+        child->center[1] = parent->center[1] + moveAmt;
 	child->center[2] = parent->center[2] - moveAmt;
         return;
     }
 
     if (childQuadrant == 1) {
         child->center[0] = parent->center[0] - moveAmt;
-        child->center[1] = parent->center[1] - moveAmt;
+        child->center[1] = parent->center[1] + moveAmt;
 	child->center[2] = parent->center[2] + moveAmt;
         return;
     }
 
     if (childQuadrant == 2) {
-        child->center[0] = parent->center[0] - moveAmt;
+        child->center[0] = parent->center[0] + moveAmt;
         child->center[1] = parent->center[1] + moveAmt;
 	child->center[2] = parent->center[2] - moveAmt;
         return;
     }
 
     if (childQuadrant == 3) {
-        child->center[0] = parent->center[0] - moveAmt;
+        child->center[0] = parent->center[0] + moveAmt;
         child->center[1] = parent->center[1] + moveAmt;
 	child->center[2] = parent->center[2] + moveAmt;
         return;
     }
 
     if (childQuadrant == 4) {
-        child->center[0] = parent->center[0] + moveAmt;
+        child->center[0] = parent->center[0] - moveAmt;
         child->center[1] = parent->center[1] - moveAmt;
 	child->center[2] = parent->center[2] - moveAmt;
         return;
     }
 
     if (childQuadrant == 5) {
-        child->center[0] = parent->center[0] + moveAmt;
+        child->center[0] = parent->center[0] - moveAmt;
         child->center[1] = parent->center[1] - moveAmt;
 	child->center[2] = parent->center[2] + moveAmt;
         return;
@@ -233,14 +259,14 @@ static void calculateCenter(Node *child, Node *parent, int childQuadrant) {
 
     if (childQuadrant == 6) {
         child->center[0] = parent->center[0] + moveAmt;
-        child->center[1] = parent->center[1] + moveAmt;
+        child->center[1] = parent->center[1] - moveAmt;
 	child->center[2] = parent->center[2] - moveAmt;
         return;
     }
 
     if (childQuadrant == 7) {
         child->center[0] = parent->center[0] + moveAmt;
-        child->center[1] = parent->center[1] + moveAmt;
+        child->center[1] = parent->center[1] - moveAmt;
 	child->center[2] = parent->center[2] + moveAmt;
         return;
     }

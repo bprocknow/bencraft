@@ -71,6 +71,8 @@ Cube_T *CUBE_GenerateCube(uint16_t x, uint16_t y, uint16_t z, CubeType type) {
 
     genCube->type = type;
 
+    genCube->surface = false;
+
     genCube->face[0] = false;
     genCube->face[1] = false;
     genCube->face[2] = false;

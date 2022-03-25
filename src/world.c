@@ -17,7 +17,7 @@
 // TODO Make aspect and FOV ratios user adjustable to min/max range of values
 #define FOV 90.0 * PI / 180.0
 #define NEAR 0.125
-#define FAR 30.0
+#define FAR 100.0
 
 int gMapSize = 4;
 
@@ -81,6 +81,7 @@ void WORLD_GenerateWorld(int size, int seedValue) {
     int worldMin = worldFindMinimum(rand, size);
     printf("World minimum: %d\n", worldMin);
 
+    int width = 2 * CUBEWIDTH;
     Cube_T *genCube;
     for (int x = 0; x < size; x++) {
         for (int z = 0; z < size; z++) {
@@ -88,10 +89,14 @@ void WORLD_GenerateWorld(int size, int seedValue) {
             if (maxY > size - 1) {
                 maxY = size - 1;
 	    }
-            for (int y = 0; y <= maxY; y++) {
-	        genCube = CUBE_GenerateCube(x*2*CUBEWIDTH, y*2*CUBEWIDTH, z*2*CUBEWIDTH, GRASS);
+	    genCube = CUBE_GenerateCube(x*width, maxY*width, z*width, GRASS);
+	    if (genCube && !OCT_AddBlock(genCube)) {
+                LOG("Could not add block: %d, %d, %d", x*width, maxY*width, z*width);
+	    }
+	    for (int y = maxY-1; y>=0; y--) {
+	        genCube = CUBE_GenerateCube(x*width, y*width, z*width, GROUND);
 	        if (genCube && !OCT_AddBlock(genCube)) {
-                    LOG("Could not add block: %d, %d, %d", genCube->x, genCube->y, genCube->z);
+                    LOG("Could not add block: %d, %d, %d", x*width, y*width, z*width);
 	        }
 	    }
 	}

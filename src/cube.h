@@ -19,7 +19,7 @@ typedef struct {
     int z;
 
     CubeType type;
-
+    bool surface;       // Cube is visible boolean
     bool face[6];	// Face visible boolean
 } Cube_T;
 
