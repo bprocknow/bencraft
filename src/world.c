@@ -90,7 +90,6 @@ void WORLD_GenerateWorld(int size, int seedValue) {
                 maxY = size - 1;
 	    }
 	    genCube = CUBE_GenerateCube(x*width, maxY*width, z*width, GRASS);
-	    printf("(%d, %d, %d)\n", x*width, maxY*width, z*width);
 	    if (genCube && !OCT_AddBlock(genCube)) {
                 LOG("Could not add block: %d, %d, %d", x*width, maxY*width, z*width);
 	    }

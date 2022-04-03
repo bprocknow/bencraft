@@ -88,7 +88,7 @@ int main() {
     }
     CUBE_LoadTextureFaces(); 
     
-    WORLD_GenerateWorld(8, 1);
+    WORLD_GenerateWorld(128, 2);
     
     //OCT_LoadMap("/home/bprocknow/repo/bencraft/maps/map8x8.txt");
 

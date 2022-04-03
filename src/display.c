@@ -57,12 +57,9 @@ void DIS_DrawLine(windowContext *winParam, float *origin, float *end, float *col
         normal[2] = tempNormNor2;
     }
     
-
     // Calculate four corners of line to draw
-    float corners[] = {origin[0]+normal[0], origin[1]+normal[1], origin[2]+normal[2], 1.0f,
-    		       origin[0]-normal[0], origin[1]-normal[1], origin[2]-normal[2], 1.0f,
-		       end[0]+normal[0],    end[1]+normal[1],    end[2]+normal[2],    1.0f,
-		       end[0]-normal[0],    end[1]-normal[1],    end[2]-normal[2],    1.0f};
+    float normalCorners[] = {normal[0], normal[1], normal[2], 1.0f,
+    		       -normal[0], -normal[1], -normal[2], 1.0f};
     const GLushort INDICES[] = {0, 1, 2, 1, 3, 2};
     
     GLint vertexPos = glGetAttribLocation(winParam->lineProgramObject, "vPosition");
@@ -75,18 +72,21 @@ void DIS_DrawLine(windowContext *winParam, float *origin, float *end, float *col
 
     // Draw the line around the inputted axis n times
     for (int i = 0; i < NUM_2D_SECTION; i++) {
-        float rotCorners[16];
-	for (int j = 0; j < 4; j++) {
-            MAT_RotateArbitraryAxis(vector, 360.0f/NUM_2D_SECTION*i, &(corners[j*4]), &(rotCorners[j*4]));
+        float rotCorners[8];
+	for (int j = 0; j < 2; j++) {
+            MAT_RotateArbitraryAxis(vector, 360.0f/NUM_2D_SECTION*i, &(normalCorners[j*4]), &(rotCorners[j*4]));
 	}
-	glVertexAttribPointer(vertexPos, 4, GL_FLOAT, GL_FALSE, 0, rotCorners);
+        float corners[] = {origin[0]+rotCorners[0], origin[1]+rotCorners[1], origin[2]+rotCorners[2], 1.0f,
+    		       origin[0]-rotCorners[0], origin[1]-rotCorners[1], origin[2]-rotCorners[2], 1.0f,
+		       end[0]+rotCorners[0],    end[1]+rotCorners[1],    end[2]+rotCorners[2],    1.0f,
+		       end[0]-rotCorners[0],    end[1]-rotCorners[1],    end[2]-rotCorners[2],    1.0f};
+
+	glVertexAttribPointer(vertexPos, 4, GL_FLOAT, GL_FALSE, 0, corners);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, INDICES);
     }
 
     glDisableVertexAttribArray(vertexPos);
 }
-
-// TODO make attribute structure containing attribute positions for different shaders
 
 void displayCube(windowContext *winParam, Cube_T *c) {
 

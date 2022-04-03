@@ -140,12 +140,10 @@ static bool drawLeaf(windowContext *winParam, Node *node, Node *nodePx, Node *no
     bool boolPz = (nodePz && nodePz->cube) ? true : false;
     
     if (isSurround(node, boolPx, boolMx, boolPz, boolMz)) {
-        printf("(%d, %d, %d) TRUE\n", node->cube->x, node->cube->y, node->cube->z);
 	return true;
     }
 
     // This is a visible cube and there have to be cubes below it that are visible
-    printf("(%d, %d, %d) FALSE\n", node->cube->x, node->cube->y, node->cube->z);
     return false;
 }
 
@@ -240,12 +238,10 @@ void OCT_DrawMap(windowContext *winParam) {
     if (root == NULL) {
         LOG("Root is null.  Cannot draw map");
     }
-    printf("Starting Draw\n");
     // Root doesn't have any neighbors
     if (!depthFirstDraw(winParam, root, NULL, NULL, NULL, NULL, NULL)) {
         LOG("Root node doesn't have a completely filled in surface.  Map error");
     }
-    printf("\n");
 }
 
 static int initializeTree(Cube_T *cube) {
