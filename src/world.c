@@ -90,10 +90,11 @@ void WORLD_GenerateWorld(int size, int seedValue) {
                 maxY = size - 1;
 	    }
 	    genCube = CUBE_GenerateCube(x*width, maxY*width, z*width, GRASS);
+	    printf("(%d, %d, %d)\n", x*width, maxY*width, z*width);
 	    if (genCube && !OCT_AddBlock(genCube)) {
                 LOG("Could not add block: %d, %d, %d", x*width, maxY*width, z*width);
 	    }
-	    for (int y = maxY-1; y>=0; y--) {
+	    for (int y = 0; y < maxY; y++) {
 	        genCube = CUBE_GenerateCube(x*width, y*width, z*width, GROUND);
 	        if (genCube && !OCT_AddBlock(genCube)) {
                     LOG("Could not add block: %d, %d, %d", x*width, y*width, z*width);
@@ -101,31 +102,25 @@ void WORLD_GenerateWorld(int size, int seedValue) {
 	    }
 	}
     }
+    printf("\n");
 }
 
 // TODO Input rotation/position vector
-void WORLD_SetWorldOrient(windowContext *winParam, UserPosition_T *usrPos) {
-    GLint matrixPos;
+void WORLD_SetWorldOrient(windowContext *winParam, UserPosition_T *usrPos, float *matrix) {
     float aspect = winParam->width / winParam->height;
-    float matrix[16];
     float tmpMatrix[16];
     float rotateY = usrPos->mouseY * 360.0f / winParam->height;
     float rotateX = usrPos->mouseX * 360.0f / winParam->width;
 
     MAT_Identity(matrix);
     MAT_Translate(tmpMatrix, usrPos->posX, usrPos->posY, usrPos->posZ);
-    MAT_Multiply(tmpMatrix, matrix, matrix);
-    //MAT_Rotate(tmpMatrix, 1, 0, 0, rotateY);
-    //MAT_Multiply(tmpMatrix, matrix, matrix);
+    MAT_MatrixMatrixMultiply(tmpMatrix, matrix, matrix);
     MAT_Rotate(tmpMatrix, 0, 1, 0, rotateX);
-    MAT_Multiply(tmpMatrix, matrix, matrix);
+    MAT_MatrixMatrixMultiply(tmpMatrix, matrix, matrix);
     MAT_Rotate(tmpMatrix, 1, 0, 0, rotateY);
-    MAT_Multiply(tmpMatrix, matrix, matrix);
+    MAT_MatrixMatrixMultiply(tmpMatrix, matrix, matrix);
     MAT_Perspective(tmpMatrix, aspect, FOV, NEAR, FAR);
-    MAT_Multiply(tmpMatrix, matrix, matrix);
-
-    matrixPos = glGetUniformLocation(winParam->programObject, "matrix");
-    glUniformMatrix4fv(matrixPos, 1, GL_FALSE, matrix);
+    MAT_MatrixMatrixMultiply(tmpMatrix, matrix, matrix);
 }
 
 

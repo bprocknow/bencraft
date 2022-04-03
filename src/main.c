@@ -1,4 +1,4 @@
-
+#include "debug.h"
 #include "cube.h"
 #include "initgl.h"
 #include "display.h"
@@ -29,7 +29,10 @@ static void handleErrors() {
 }
 
 static void WinLoop(windowContext *winParam) {
+    float matrix[16];
+    GLuint matrixPos;
     UserPosition_T userPos;
+
     userPos.posX = 0.0f;
     userPos.posY = 0.0f;
     userPos.posZ = 0.0f;
@@ -41,9 +44,23 @@ static void WinLoop(windowContext *winParam) {
 
 	WIN_GetMouseInput(winParam, &userPos);
 	
-	WORLD_SetWorldOrient(winParam, &userPos);
+	WORLD_SetWorldOrient(winParam, &userPos, matrix);
+        
+	// Draw everything that uses texture shader program
+	glUseProgram(winParam->texProgramObject);
+
+	matrixPos = glGetUniformLocation(winParam->texProgramObject, "matrix");
+        glUniformMatrix4fv(matrixPos, 1, GL_FALSE, matrix);
         
 	OCT_DrawMap(winParam);
+
+        // Draw everything that uses line shader program
+	glUseProgram(winParam->lineProgramObject);
+
+	matrixPos = glGetUniformLocation(winParam->lineProgramObject, "matrix");
+	glUniformMatrix4fv(matrixPos, 1, GL_FALSE, matrix);
+        
+        DEB_DrawAxis(winParam);
 
         // Handle OpenGL Errors
         handleErrors();
@@ -71,9 +88,9 @@ int main() {
     }
     CUBE_LoadTextureFaces(); 
     
-    WORLD_GenerateWorld(128, 1);
+    WORLD_GenerateWorld(8, 1);
     
-    //OCT_LoadMap("/home/bprocknow/repo/bencraft/maps/map4x4.txt");
+    //OCT_LoadMap("/home/bprocknow/repo/bencraft/maps/map8x8.txt");
 
     WinLoop(&winParam);
 

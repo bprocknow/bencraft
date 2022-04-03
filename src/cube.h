@@ -1,3 +1,5 @@
+#ifndef CUBE_H
+#define CUBE_H
 
 #include <GL/gl.h>
 #include <stdbool.h>
@@ -27,3 +29,5 @@ extern GLuint gFaceTextures[NUMTYPES][6];
 
 void CUBE_LoadTextureFaces(void);
 Cube_T *CUBE_GenerateCube(uint16_t x, uint16_t y, uint16_t z, CubeType cType);
+
+#endif
