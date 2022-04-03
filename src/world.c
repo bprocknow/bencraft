@@ -2,6 +2,7 @@
 #include "initgl.h"
 #include "world.h"
 #include "cube.h"
+#include "debug.h"
 #include "octree.h"
 #include "log.h"
 #include <math.h>
@@ -13,6 +14,7 @@
 #define DEGTORAD(x) (x * PI / 180.0)
 
 #define mapEq(r, x, z) (r*sinf(x/(4*r)) + r*cosf(x/r) - r*sinf(x/r) - r*sinf(z/(4*r)) - r*cosf(z/r) + r*sinf(z/(2*r)))
+#define rotateEq(rot, dim) rot * 360.0f / dim
 
 // TODO Make aspect and FOV ratios user adjustable to min/max range of values
 #define FOV 90.0 * PI / 180.0
@@ -101,15 +103,37 @@ void WORLD_GenerateWorld(int size, int seedValue) {
 	    }
 	}
     }
-    printf("\n");
+}
+
+void WORLD_SetUserPosition(windowContext *winParam, UserPosition_T *usrPos, float fwdMove, float sideMove) {
+    float rotateY = rotateEq(usrPos->mouseY, winParam->width);
+    float rotateX = rotateEq(usrPos->mouseX, winParam->height);
+    
+    float vector[] = {0.0f, 0.0f, -1.0f, 1.0f};
+    float normVector[] = {-1.0f, 0.0f, 0.0f, 1.0f}; 
+    float xAxis[] = {1.0f, 0.0f, 0.0f, 1.0f};
+    float yAxis[] = {0.0f, 1.0f, 0.0f, 1.0f};
+
+    // Calculate direction user is pointing
+    MAT_RotateArbitraryAxis(yAxis, -rotateX, vector, vector);
+    MAT_RotateArbitraryAxis(yAxis, -rotateX, xAxis, xAxis);
+    MAT_RotateArbitraryAxis(xAxis, -rotateY, vector, vector);
+    
+    // Calculate direction to the right of where user is pointing
+    MAT_RotateArbitraryAxis(yAxis, -rotateX, normVector, normVector);
+    MAT_RotateArbitraryAxis(xAxis, -rotateY, normVector, normVector);
+
+    usrPos->posX -= fwdMove*vector[0] + normVector[0]*sideMove;
+    usrPos->posY -= fwdMove*vector[1] + normVector[1]*sideMove;
+    usrPos->posZ -= fwdMove*vector[2] + normVector[2]*sideMove;
 }
 
 // TODO Input rotation/position vector
 void WORLD_SetWorldOrient(windowContext *winParam, UserPosition_T *usrPos, float *matrix) {
     float aspect = winParam->width / winParam->height;
     float tmpMatrix[16];
-    float rotateY = usrPos->mouseY * 360.0f / winParam->height;
-    float rotateX = usrPos->mouseX * 360.0f / winParam->width;
+    float rotateY = rotateEq(usrPos->mouseY, winParam->width);
+    float rotateX = rotateEq(usrPos->mouseX, winParam->height);
 
     MAT_Identity(matrix);
     MAT_Translate(tmpMatrix, usrPos->posX, usrPos->posY, usrPos->posZ);

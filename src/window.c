@@ -38,25 +38,44 @@ void WIN_GetMouseInput(windowContext *winParam, UserPosition_T *usrPos) {
     }
 }
 
-static void handleText(UserPosition_T *userPos, char text) {
+//static void handleText(windowContext *winParam, UserPosition_T *userPos, char text) {
+//    switch (text) {
+//        case 'w':
+//            userPos->posZ += MOVEMENTSPEED;
+//	    break;
+//	case 'a':
+//	    userPos->posX -= MOVEMENTSPEED;
+//	    break;
+//	case 's':
+//	    userPos->posZ -= MOVEMENTSPEED;
+//	    break;
+//	case 'd':
+//            userPos->posX += MOVEMENTSPEED;
+//	    break;
+//        case 'z':
+//	    userPos->posY += MOVEMENTSPEED;
+//	    break;
+//	case 'x': 
+//	    userPos->posY -= MOVEMENTSPEED;
+//	    break;
+//	default:
+//	    break;
+//    }
+//}
+
+static void handleText(windowContext *winParam, UserPosition_T *userPos, char text) {
     switch (text) {
         case 'w':
-            userPos->posZ += MOVEMENTSPEED;
+            WORLD_SetUserPosition(winParam, userPos, MOVEMENTSPEED, 0.0f);
 	    break;
 	case 'a':
-	    userPos->posX -= MOVEMENTSPEED;
+	    WORLD_SetUserPosition(winParam, userPos, 0.0f, MOVEMENTSPEED);
 	    break;
 	case 's':
-	    userPos->posZ -= MOVEMENTSPEED;
+	    WORLD_SetUserPosition(winParam, userPos, -MOVEMENTSPEED, 0.0f);
 	    break;
 	case 'd':
-            userPos->posX += MOVEMENTSPEED;
-	    break;
-        case 'z':
-	    userPos->posY += MOVEMENTSPEED;
-	    break;
-	case 'x': 
-	    userPos->posY -= MOVEMENTSPEED;
+	    WORLD_SetUserPosition(winParam, userPos, 0.0f, -MOVEMENTSPEED);
 	    break;
 	default:
 	    break;
@@ -77,7 +96,7 @@ int WIN_UserInterrupt(windowContext *winParam, UserPosition_T *userPos) {
 	// TODO Implement key press
         if ( xev.type == KeyPress ) {
             if (XLookupString(&xev.xkey, &text, 1, &key, 0) == 1) {
-                handleText(userPos, text);
+                handleText(winParam, userPos, text);
 	    }
         }
 /*        if (xev.type == ClientMessage) {
