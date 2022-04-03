@@ -1,3 +1,5 @@
+#ifndef INITGL_H
+#define INITGL_H
 
 #include <stdint.h>
 #include <EGL/egl.h>
@@ -11,6 +13,8 @@
 #define WINDOW_DEPTH	2
 #define WINDOW_STENCIL	4
 #define WINDOW_MULTISAMPLE 8
+
+#define NUM_SHADERS 2
 
 typedef struct tagWindowContext windowContext;
 
@@ -26,7 +30,8 @@ struct tagWindowContext {
     EGLContext eglContext;
     EGLSurface eglSurface;
 
-    GLuint programObject;
+    GLuint texProgramObject;
+    GLuint lineProgramObject;
 
     void (*keyFunc) (windowContext *winParam, char text);
 };
@@ -35,3 +40,5 @@ GLuint INITGL_LoadTexture(const char *imagePath);
 GLboolean INITGL_InitGL(windowContext *winParams);
 int INITGL_InitEGL(windowContext *winParams, const char *title, GLint width, GLint height,
 		GLuint flags);
+
+#endif

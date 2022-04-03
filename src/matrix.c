@@ -1,3 +1,4 @@
+#include "matrix.h"
 #include <math.h>
 
 #define PI 3.14159265
@@ -20,6 +21,36 @@ void MAT_Identity(float *arr) {
     arr[13] = 0.0f;
     arr[14] = 0.0f;
     arr[15] = 1.0f;
+}
+
+/*
+    Inputs: 
+    float *axis:  Axis of rotation
+    float degrees:  Degrees to rotate around axis of rotation
+    float *rotatedVector:  Vector to rotate around axis of rotation
+*/
+void MAT_RotateArbitraryAxis(float *axis, float degrees, float *rotVec, float *dest) {
+    float radians = DEGTORAD(degrees);
+
+    float rotationMatrix[] = {
+	(1-cosf(radians))*powf(axis[0], 2.0f) + cosf(radians), 
+	(1-cosf(radians))*axis[0]*axis[1] + sinf(radians)*axis[2],
+	(1-cosf(radians))*axis[0]*axis[2] - sinf(radians)*axis[1], 
+        0.0f,
+	(1-cosf(radians))*axis[0]*axis[1] - sinf(radians)*axis[2],
+	(1-cosf(radians))*powf(axis[1], 2.0f) + cosf(radians),
+	(1-cosf(radians))*axis[1]*axis[2] + sinf(radians)*axis[0],
+        0.0f,
+	(1-cosf(radians))*axis[0]*axis[2] + sinf(radians)*axis[1],
+	(1-cosf(radians))*axis[1]*axis[2] - sinf(radians)*axis[0],
+	(1-cosf(radians))*powf(axis[2], 2.0f) + cosf(radians),
+        0.0f,
+	0.0f,
+	0.0f,
+	0.0f,
+	1.0f};
+
+    MAT_MatrixVectorMultiply(rotationMatrix, rotVec, dest);
 }
 
 /*
@@ -92,19 +123,36 @@ void MAT_Perspective(float *arr, float aspect, float fov, float zNear, float zFa
     arr[15] = 0.0f;
 }
 
-void MAT_Multiply(float *arr1, float *arr2, float *dest) {
+void MAT_MatrixVectorMultiply(float *matrix, float *vector, float *dest) {
+    float result[4];
+
+    // Column major
+    for (int colArr = 0; colArr < 4; colArr++) {
+        float total = 0;
+	for (int rowArr = 0; rowArr < 4; rowArr++) {
+            total += matrix[colArr + 4*rowArr] * vector[rowArr];        
+	}
+	result[colArr] = total;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        dest[i] = result[i];
+    }
+}
+
+void MAT_MatrixMatrixMultiply(float *arr1, float *arr2, float *dest) {
     float result[16];
 
-    // OpenGL matrices are column major
-    for (int colArr1 = 0; colArr1 < 4; colArr1++) {
-        for (int rowArr2 = 0; rowArr2 < 4; rowArr2++) {
+    // Column Major arrays
+    for (int rowArr = 0; rowArr < 4; rowArr++) {
+        for (int colArr = 0; colArr < 4; colArr++) {
             float total = 0;
             
 	    // Add arr1 column with arr2 row
 	    for (int elem = 0; elem < 4; elem++) {
-                total += arr1[rowArr2 + elem*4] * arr2[colArr1*4 + elem];
+                total += arr1[colArr + elem*4] * arr2[rowArr*4 + elem];
 	    }
-	    result[colArr1*4 + rowArr2] = total;
+	    result[rowArr*4 + colArr] = total;
 	}
     }
     // Copy result to destination matrix

@@ -11,8 +11,10 @@
 #include <png.h>
 #include <errno.h>
 
-static const char *VERTEX_FILE = "/home/bprocknow/repo/bencraft/shaders/vertex.glsl";
-static const char *FRAG_FILE = "/home/bprocknow/repo/bencraft/shaders/fragment.glsl";
+static char *LINE_VERTEX_FILE = "/home/bprocknow/repo/bencraft/shaders/line_vertex.glsl";
+static char *LINE_FRAG_FILE = "/home/bprocknow/repo/bencraft/shaders/line_fragment.glsl";
+static char *TEX_VERTEX_FILE = "/home/bprocknow/repo/bencraft/shaders/tex_vertex.glsl";
+static char *TEX_FRAG_FILE = "/home/bprocknow/repo/bencraft/shaders/tex_fragment.glsl";
 
 static int readPNG(const char *imagePath, int *outWidth, int *outHeight, Bool *outHasAlpha, GLubyte **outData);
 static char *readFile(const char *filePath);
@@ -117,8 +119,8 @@ GLuint INITGL_LoadTexture(const char *imagePath) {
 	return 0;
     }
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -221,21 +223,21 @@ static GLuint loadShader(GLenum type, const char *shaderTxt) {
     return shader;
 }
 
-static GLboolean createProgram(windowContext *winParam) {
+static GLboolean createProgram(GLuint *program, char *vertexFile, char *fragFile) {
     GLuint vertexShader;
     GLuint fragmentShader;
     GLint status;
     char *shaderTxt;
     char *fragTxt;
 
-    shaderTxt = readFile(VERTEX_FILE);
+    shaderTxt = readFile(vertexFile);
     if (!shaderTxt) {
-        fprintf(stderr, "ERROR: Could not open file %s\n", VERTEX_FILE);
+        fprintf(stderr, "ERROR: Could not open file %s\n", vertexFile);
 	return GL_FALSE;
     }
-    fragTxt = readFile(FRAG_FILE);
+    fragTxt = readFile(fragFile);
     if (!shaderTxt) {
-        fprintf(stderr, "ERROR: Could not open file %s\n", FRAG_FILE);
+        fprintf(stderr, "ERROR: Could not open file %s\n", fragFile);
 	return GL_FALSE;
     }
     vertexShader = loadShader(GL_VERTEX_SHADER, shaderTxt);
@@ -251,30 +253,30 @@ static GLboolean createProgram(windowContext *winParam) {
     free(shaderTxt);
     free(fragTxt);
 
-    winParam->programObject = glCreateProgram();
-    if (winParam->programObject == 0) {
+    *program = glCreateProgram();
+    if (*program == 0) {
         fprintf(stderr, "Could not create shader program\n");
 	return GL_FALSE;
     }
 
-    glAttachShader(winParam->programObject, vertexShader);
-    glAttachShader(winParam->programObject, fragmentShader);
-    glLinkProgram(winParam->programObject);
+    glAttachShader(*program, vertexShader);
+    glAttachShader(*program, fragmentShader);
+    glLinkProgram(*program);
 
     // Make sure link succeeded
-    glGetProgramiv(winParam->programObject, GL_LINK_STATUS, &status);
+    glGetProgramiv(*program, GL_LINK_STATUS, &status);
     if (status == GL_FALSE) {
         fprintf(stderr, "Could not verify shader program.  Verify shader code\n");
-	glDeleteProgram(winParam->programObject);
+	glDeleteProgram(*program);
 	return GL_FALSE;
     }
 
     // Verify that runtime operation will succeed
-    glValidateProgram(winParam->programObject);
-    glGetProgramiv(winParam->programObject, GL_VALIDATE_STATUS, &status);
+    glValidateProgram(*program);
+    glGetProgramiv(*program, GL_VALIDATE_STATUS, &status);
     if (status == GL_FALSE) {
         fprintf(stderr, "Validating program failed\n");
-	glDeleteProgram(winParam->programObject);
+	glDeleteProgram(*program);
 	return GL_FALSE;
     }
 
@@ -289,22 +291,29 @@ static GLboolean createProgram(windowContext *winParam) {
 GLboolean INITGL_InitGL(windowContext *winParam) {
     
     GLboolean ret;
-
-    ret = createProgram(winParam);
+   
+    // Create texture shader program
+    ret = createProgram(&winParam->texProgramObject, TEX_VERTEX_FILE, TEX_FRAG_FILE);
     if (!ret) {
-        fprintf(stderr, "Could not create OpenGL program\n"); 
+        fprintf(stderr, "Could not create OpenGL texture shader program\n"); 
+	return GL_FALSE;
+    }
+    // Create line shader program
+    ret = createProgram(&winParam->lineProgramObject, LINE_VERTEX_FILE, LINE_FRAG_FILE);
+    if (!ret) {
+        fprintf(stderr, "Could not create OpenGL line shader program\n");
 	return GL_FALSE;
     }
     
     glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
     glViewport(0, 0, winParam->width, winParam->height);
 
-    glUseProgram(winParam->programObject);
+    glUseProgram(winParam->texProgramObject);
     
     // Remove shapes that are facing away (clockwise)
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
-    glCullFace(GL_FRONT);
+    glCullFace(GL_BACK);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);

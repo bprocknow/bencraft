@@ -19,7 +19,11 @@
 #define NEAR 0.125
 #define FAR 100.0
 
-int gMapSize = 0;
+int gMapSize = 4;
+
+static int worldAlg(int r, int mX, int mZ);
+static int worldFindMinimum(int r, int size);
+
 
 // Find the minimum point in the world.  
 // There probably in O(1) way to implement this with calc magic.  
@@ -29,9 +33,7 @@ static int worldFindMinimum(int r, int size) {
     
     for (int x = 0; x < size; x++) {
         for (int z = 0; z < size; z++) {
-	    //int y = (r*sinf(x/(4*r)) + r*cosf(x/r) - 2*r*sinf(x/r) - 2*r*sinf(z/(4*r)) - r*cosf(z/r) + r*sinf(z/(2*r)));
-	    int y = (int)mapEq(r, x, z);
-
+	    int y = worldAlg(r, x, z);
 	    if (y < minimum) {
 		minimum = y;
 	    }
@@ -54,7 +56,6 @@ static int worldAlg(int r, int mX, int mZ) {
     float x = (float)mX;
     float z = (float)mZ;
     
-    //return (int)(r*sinf(x/(4*r)) + r*cosf(x/r) - 2*r*sinf(x/r) - 2*r*sinf(z/(4*r)) - r*cosf(z/r) + r*sinf(z/(2*r)));
     return (int)mapEq(r, x, z);
 }
 
@@ -80,6 +81,7 @@ void WORLD_GenerateWorld(int size, int seedValue) {
     int worldMin = worldFindMinimum(rand, size);
     printf("World minimum: %d\n", worldMin);
 
+    int width = 2 * CUBEWIDTH;
     Cube_T *genCube;
     for (int x = 0; x < size; x++) {
         for (int z = 0; z < size; z++) {
@@ -87,37 +89,38 @@ void WORLD_GenerateWorld(int size, int seedValue) {
             if (maxY > size - 1) {
                 maxY = size - 1;
 	    }
-//	    for (int y = 0; y <= maxY; y++) {
-	    genCube = CUBE_GenerateCube(x, maxY, z, GROUND);
-	    OCT_AddBlock(genCube);
-//	    }
+	    genCube = CUBE_GenerateCube(x*width, maxY*width, z*width, GRASS);
+	    printf("(%d, %d, %d)\n", x*width, maxY*width, z*width);
+	    if (genCube && !OCT_AddBlock(genCube)) {
+                LOG("Could not add block: %d, %d, %d", x*width, maxY*width, z*width);
+	    }
+	    for (int y = 0; y < maxY; y++) {
+	        genCube = CUBE_GenerateCube(x*width, y*width, z*width, GROUND);
+	        if (genCube && !OCT_AddBlock(genCube)) {
+                    LOG("Could not add block: %d, %d, %d", x*width, y*width, z*width);
+	        }
+	    }
 	}
     }
+    printf("\n");
 }
 
 // TODO Input rotation/position vector
-void WORLD_SetWorldOrient(windowContext *winParam, UserPosition_T *usrPos) {
-    GLint matrixPos;
+void WORLD_SetWorldOrient(windowContext *winParam, UserPosition_T *usrPos, float *matrix) {
     float aspect = winParam->width / winParam->height;
-    float matrix[16];
     float tmpMatrix[16];
     float rotateY = usrPos->mouseY * 360.0f / winParam->height;
     float rotateX = usrPos->mouseX * 360.0f / winParam->width;
 
     MAT_Identity(matrix);
     MAT_Translate(tmpMatrix, usrPos->posX, usrPos->posY, usrPos->posZ);
-    MAT_Multiply(tmpMatrix, matrix, matrix);
-    //MAT_Rotate(tmpMatrix, 1, 0, 0, rotateY);
-    //MAT_Multiply(tmpMatrix, matrix, matrix);
+    MAT_MatrixMatrixMultiply(tmpMatrix, matrix, matrix);
     MAT_Rotate(tmpMatrix, 0, 1, 0, rotateX);
-    MAT_Multiply(tmpMatrix, matrix, matrix);
+    MAT_MatrixMatrixMultiply(tmpMatrix, matrix, matrix);
     MAT_Rotate(tmpMatrix, 1, 0, 0, rotateY);
-    MAT_Multiply(tmpMatrix, matrix, matrix);
+    MAT_MatrixMatrixMultiply(tmpMatrix, matrix, matrix);
     MAT_Perspective(tmpMatrix, aspect, FOV, NEAR, FAR);
-    MAT_Multiply(tmpMatrix, matrix, matrix);
-
-    matrixPos = glGetUniformLocation(winParam->programObject, "matrix");
-    glUniformMatrix4fv(matrixPos, 1, GL_FALSE, matrix);
+    MAT_MatrixMatrixMultiply(tmpMatrix, matrix, matrix);
 }
 
 

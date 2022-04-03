@@ -1,11 +1,15 @@
+#ifndef CUBE_H
+#define CUBE_H
 
 #include <GL/gl.h>
+#include <stdbool.h>
 #include <stdint.h>
 
-#define CUBEWIDTH 0.5f;
+#define CUBEWIDTH 0.5f
 
 typedef enum {
     GROUND,
+    GRASS,
     SKY,
     WOOD,
     NUMTYPES
@@ -17,11 +21,13 @@ typedef struct {
     int z;
 
     CubeType type;
-
-    uint8_t faceVis[6];	// Face visible boolean
+    bool surface;       // Cube is visible boolean
+    bool face[6];	// Face visible boolean
 } Cube_T;
 
 extern GLuint gFaceTextures[NUMTYPES][6];
 
 void CUBE_LoadTextureFaces(void);
 Cube_T *CUBE_GenerateCube(uint16_t x, uint16_t y, uint16_t z, CubeType cType);
+
+#endif

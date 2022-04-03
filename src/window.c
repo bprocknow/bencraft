@@ -41,13 +41,13 @@ void WIN_GetMouseInput(windowContext *winParam, UserPosition_T *usrPos) {
 static void handleText(UserPosition_T *userPos, char text) {
     switch (text) {
         case 'w':
-            userPos->posZ -= MOVEMENTSPEED;
+            userPos->posZ += MOVEMENTSPEED;
 	    break;
 	case 'a':
 	    userPos->posX -= MOVEMENTSPEED;
 	    break;
 	case 's':
-	    userPos->posZ += MOVEMENTSPEED;
+	    userPos->posZ -= MOVEMENTSPEED;
 	    break;
 	case 'd':
             userPos->posX += MOVEMENTSPEED;

@@ -1,4 +1,5 @@
-
+#ifndef WORLD_H
+#define WORLD_H
 
 typedef struct {
     int mouseX;
@@ -12,4 +13,6 @@ typedef struct {
 extern int gMapSize;
 
 void WORLD_GenerateWorld(int size, int seedValue);
-void WORLD_SetWorldOrient(windowContext *winParam, UserPosition_T *usrPos);
+void WORLD_SetWorldOrient(windowContext *winParam, UserPosition_T *usrPos, float *matrix);
+
+#endif
